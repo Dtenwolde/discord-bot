@@ -1,4 +1,3 @@
-torch
 numpy
 discord
 pillow
@@ -17,15 +16,9 @@ multipledispatch
 Werkzeug
 requests
 pymongo
-selenium
 pandas
-sklearn
 joblib
 spotipy
-pandas==1.2.4
-sklearn~=0.0
-joblib~=1.0.1
-spotipy~=2.19.0
-scikit-learn~=1.0.2
-scipy~=1.8.0
+scipy
 matplotlib
+pymongo[srv]

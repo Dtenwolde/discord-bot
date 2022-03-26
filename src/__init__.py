@@ -15,7 +15,7 @@ from musicplayer.music import Music
 from musicplayer.soundboard import Soundboard
 from src.database.repository import music_repository, trigger_repository
 from league_api import LeagueAPI
-from predictor import Predictor
+#from predictor import Predictor
 from score_api import PandaScoreAPI
 from musicplayer.musicplayer import MusicPlayer, Playlist
 from src.musicplayer.youtube_search import YoutubeAPI
@@ -41,8 +41,10 @@ class Bot(commands.Bot):
         self.league_api = LeagueAPI(self, self.config["DEFAULT"]["LeagueAPIKey"])
         self.panda_score_api = PandaScoreAPI(self.config["DEFAULT"]["PandaScoreAPIKey"])
 
-        self.asyncio_loop = asyncio.new_event_loop()
-        self.asyncio_thread = threading.Thread(target=self.asyncio_loop.run_forever)
+        # self.asyncio_loop = asyncio.new_event_loop()
+        # self.asyncio_thread = threading.Thread(target=self.asyncio_loop.run_forever)
+        # self.asyncio_thread.start()
+
         self.esports = Esports(self, self.panda_score_api)
 
         # self.asyncio_thread.start()
