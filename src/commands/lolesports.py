@@ -144,6 +144,7 @@ class Esports(commands.Cog):
     def create_league_bet(context, match_id, bet_team, bet_amount, odd, profile):
         collection = db['esportGame']
 
+
         # TODO insert odds for team
         game = EsportGame(context.author, match_id, bet_amount, bet_team.upper(), odd, context.channel.id)
         profile_repository.update_money(profile, -bet_amount)
