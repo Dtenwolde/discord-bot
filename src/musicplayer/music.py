@@ -143,9 +143,8 @@ class Music(commands.Cog):
 
     @commands.command()
     async def stop(self, context):
-        """Stops and disconnects the bot from voice"""
-
-        await context.voice_client.disconnect()
+        """Stops the bot"""
+        context.voice_client.stop()
 
     @commands.command()
     async def pause(self, context):

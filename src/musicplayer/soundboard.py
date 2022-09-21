@@ -30,6 +30,7 @@ class Soundboard(commands.Cog):
                 await context.send("You are not connected to a voice channel.")
                 raise commands.CommandError("Author not connected to a voice channel.")
 
+
 class Sounds(discord.ui.View):
     def __init__(self, bot, ctx):
         super().__init__()
@@ -48,7 +49,7 @@ class Sounds(discord.ui.View):
         url = 'https://www.youtube.com/watch?v=OIe2UbGKJQQ'
         await self.play_sound(url, interaction)
 
-    @discord.ui.button(label='', style=discord.ButtonStyle.grey,emoji='✨')
+    @discord.ui.button(label='', style=discord.ButtonStyle.grey, emoji='✨')
     async def uwu(self, interaction: discord.Interaction, button: discord.ui.Button):
         global uwu_count
         uwu_count += 1
@@ -73,4 +74,52 @@ class Sounds(discord.ui.View):
     async def headshot(self, interaction: discord.Interaction, button: discord.ui.Button):
         url = 'https://www.youtube.com/watch?v=ERzP8_tN9io'
         await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.grey, emoji='🐕')
+    async def dog(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=SdmfidIYS84'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.red, emoji='😔')
+    async def sad(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=7ODcC5z6Ca0'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.blurple, emoji='<a:sussy:938104411866152970>')
+    async def sus(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=ekL881PJMjI'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.green, emoji='3️⃣')
+    async def triple(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=XlLbsTP0C_U'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.grey, emoji='5️⃣')
+    async def pentakill(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=ewXkNOsx5dU'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.red, emoji='🦆')
+    async def duck(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=aqCxlxclyzo'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.blurple, emoji='🍝')
+    async def spaghet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=0ynT_2DDBZg'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.green, emoji='💥')
+    async def bonk(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=ZXK427oXjn8'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.grey, emoji='🏳')
+    async def failed(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=DQrUuRPDbwo'
+        await self.play_sound(url, interaction)
+
+
+
 
