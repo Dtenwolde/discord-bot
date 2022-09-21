@@ -15,10 +15,10 @@ class Soundboard(commands.Cog):
     async def soundboard(self, ctx):
         # We create the view and assign it to a variable so we can wait for it later.
         view = Sounds(self.bot, ctx)
-        await ctx.send('What sound would you like to play?', view=view, delete_after=5)
+        await ctx.send('What sound would you like to play?', view=view)
         # Wait for the View to stop listening for input...
         await view.wait()
-
+        await ctx.channel.purge(limit=1)
         await self.soundboard(ctx)
 
     @soundboard.before_invoke
@@ -29,9 +29,6 @@ class Soundboard(commands.Cog):
             else:
                 await context.send("You are not connected to a voice channel.")
                 raise commands.CommandError("Author not connected to a voice channel.")
-
-
-
 
 class Sounds(discord.ui.View):
     def __init__(self, bot, ctx):
@@ -46,9 +43,9 @@ class Sounds(discord.ui.View):
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(label='Running', style=discord.ButtonStyle.green)
+    @discord.ui.button(label='', style=discord.ButtonStyle.green, emoji='🏃')
     async def running(self, interaction: discord.Interaction, button: discord.ui.Button):
-        url = 'https://www.youtube.com/watch?v=27QvunceKVo'
+        url = 'https://www.youtube.com/watch?v=OIe2UbGKJQQ'
         await self.play_sound(url, interaction)
 
     @discord.ui.button(label='', style=discord.ButtonStyle.grey,emoji='✨')
@@ -62,8 +59,18 @@ class Sounds(discord.ui.View):
 
         await self.play_sound(url, interaction)
 
-    @discord.ui.button(label="Change All", style=discord.ButtonStyle.success)
-    async def color_changing_button(self, interaction: discord.Interaction, child: discord.ui.Button, ):
-        for child in self.children:
-            child.disabled = True
-        await interaction.response.edit_message(view=self)
+    @discord.ui.button(label='', style=discord.ButtonStyle.red, emoji='🤡')
+    async def chasing(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=aTyNKpoDwyM'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.blurple, emoji='❌')
+    async def wrong(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=XW_-e-xQ_q8'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.green, emoji='🎯')
+    async def headshot(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=ERzP8_tN9io'
+        await self.play_sound(url, interaction)
+
