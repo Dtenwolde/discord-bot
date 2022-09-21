@@ -1,4 +1,5 @@
 import asyncio
+import queue
 
 import discord
 import youtube_dl
@@ -24,7 +25,7 @@ ytdl_format_options = {
 }
 
 ffmpeg_options = {
-    'options': '-vn',
+    'options': '-vn -dn -ignore_unknown -sn',
 }
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
@@ -55,6 +56,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.queue = queue.Queue()
 
     @commands.command()
     async def join(self, context):
@@ -94,16 +96,19 @@ class Music(commands.Cog):
         """
         Makes the bot leave its currently active voice channel.
         """
-        # self.clear_and_stop(context)
         await context.voice_client.disconnect()
 
     @commands.command()
     async def stream(self, context, *, url):
         """Streams from a url (same as yt, but doesn't predownload)"""
-
+        vc = context.voice_client
+        if vc.is_playing():
+            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+            await context.send(f"Already playing a song, put {player.title} in queue")
+            return
         async with context.typing():
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
-            context.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
+            vc.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
 
         await context.send(f'Now playing: {player.title}')
 
