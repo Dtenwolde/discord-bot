@@ -12,6 +12,7 @@ from commands.currency import Currency
 from commands.games import Games
 from commands.lolesports import Esports
 from commands.reputation import Reputation
+from musicplayer.music import Music
 from src.database.repository import music_repository, trigger_repository
 from league_api import LeagueAPI
 from predictor import Predictor
@@ -44,12 +45,12 @@ class Bot(commands.Bot):
         self.asyncio_thread = threading.Thread(target=self.asyncio_loop.run_forever)
         self.esports = Esports(self, self.panda_score_api)
 
-        self.asyncio_thread.start()
-        self.league_api.payout_games.start()
-        self.esports.payout_league_bet.start()
+        # self.asyncio_thread.start()
+        # self.league_api.payout_games.start()
+        # self.esports.payout_league_bet.start()
         self.token = self.config["DEFAULT"]["DiscordAPIKey"]
 
-        self.predictor = Predictor()
+        # self.predictor = Predictor()
 
         print("Done initializing.")
 
@@ -105,18 +106,33 @@ class Bot(commands.Bot):
         return wrapper
 
 
-intents = discord.Intents.default()
-intents.members = True
-bot = Bot("config.conf", intents=intents)
+async def add_all_cogs(bot):
+    await bot.add_cog(Reputation(bot))
+    await bot.add_cog(bot.music_player)
+    await bot.add_cog(Chat(bot))
+    await bot.add_cog(Playlist(bot))
+    await bot.add_cog(Currency(bot))
+    await bot.add_cog(Games(bot))
+    await bot.add_cog(bot.esports)
+    await bot.add_cog(bot.league_api)
 
-bot.add_cog(Reputation(bot))
-bot.add_cog(bot.music_player)
-bot.add_cog(Chat(bot))
-bot.add_cog(Playlist(bot))
-bot.add_cog(Currency(bot))
-bot.add_cog(Games(bot))
-bot.add_cog(bot.esports)
-bot.add_cog(bot.league_api)
+
+intents = discord.Intents.default()
+intents.message_content = True
+bot = Bot("config.conf", intents=intents)
+# asyncio.run(add_all_cogs(bot))
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    print('------')
+
+
+async def bot_run():
+    async with bot:
+        await bot.add_cog(Music(bot))
+        await bot.start(bot.token)
+
 
 # Use event handlers for emotes etc.
 import src.event_handlers.messages  # noqa

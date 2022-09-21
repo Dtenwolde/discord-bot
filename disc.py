@@ -1,6 +1,11 @@
+import asyncio
+import functools
 import os
 import pathlib
 
+import typing
+
+from src import bot_run
 
 
 def create_directories():
@@ -10,11 +15,25 @@ def create_directories():
     print("Created directories")
 
 
+def to_thread(func: typing.Callable) -> typing.Coroutine:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        wrapper = functools.partial(func, *args, **kwargs)
+        return await loop.run_in_executor(None, wrapper)
+    return wrapper
+
+
+@to_thread
 def main():
     create_directories()
     from src import bot
-    bot.run(bot.token)
+    asyncio.run(bot_run())
+    # bot.run(bot.token)
+
+
+
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.get_event_loop().run_until_complete(main())

@@ -400,7 +400,7 @@ class MusicPlayer(commands.Cog):
     def clear_and_stop(self, context: Context):
         self.queue = queue.Queue()
         self.is_playing = False
-        context.voice_client.stop()
+        context.voice_client.pause()
 
         # Set to not playing anything
         coro = self.bot.change_presence(activity=None)
