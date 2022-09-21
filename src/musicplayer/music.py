@@ -73,13 +73,32 @@ class Music(commands.Cog):
             await context.channel.send("You are not in a voice channel.")
 
     @commands.command()
-    async def play(self, context, *, query):
-        """Plays a file from the local filesystem"""
+    async def play(self, context):
+        if self.queue.empty():
+            await context.channel.send("No songs in the queue")
+            return
+        vc = context.voice_client
+        url = self.queue.get()
+        async with context.typing():
+            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+            vc.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
+        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f"{player.title}"))
 
-        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(query))
-        context.voice_client.play(source, after=lambda e: print(f'Player error: {e}') if e else None)
 
-        await context.send(f'Now playing: {query}')
+
+    @commands.command()
+    async def queue(self, context, *, url):
+        self.queue.put(url)
+        await context.send(f"Queued {url}")
+
+    # @commands.command()
+    # async def play(self, context, *, query):
+    #     """Plays a file from the local filesystem"""
+    #
+    #     source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(query))
+    #     context.voice_client.play(source, after=lambda e: print(f'Player error: {e}') if e else None)
+    #
+    #     await context.send(f'Now playing: {query}')
 
     @commands.command()
     async def yt(self, context, *, url):
@@ -103,8 +122,8 @@ class Music(commands.Cog):
         """Streams from a url (same as yt, but doesn't predownload)"""
         vc = context.voice_client
         if vc.is_playing():
-            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
-            await context.send(f"Already playing a song, put {player.title} in queue")
+            self.queue.put(url)
+            await context.send(f"Already playing a song, put {url} in queue")
             return
         async with context.typing():
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)

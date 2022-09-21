@@ -1,6 +1,5 @@
 import asyncio
 import configparser
-import os
 import threading
 
 import discord
