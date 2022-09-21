@@ -12,6 +12,7 @@ from commands.games import Games
 from commands.lolesports import Esports
 from commands.reputation import Reputation
 from musicplayer.music import Music
+from musicplayer.soundboard import Soundboard
 from src.database.repository import music_repository, trigger_repository
 from league_api import LeagueAPI
 from predictor import Predictor
@@ -130,6 +131,7 @@ async def on_ready():
 async def bot_run():
     async with bot:
         await bot.add_cog(Music(bot))
+        await bot.add_cog(Soundboard(bot))
         await bot.start(bot.token)
 
 

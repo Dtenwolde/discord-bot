@@ -78,18 +78,17 @@ class Music(commands.Cog):
             await context.channel.send("No songs in the queue")
             return
         vc = context.voice_client
-        url = self.queue.get()
-        async with context.typing():
-            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
-            vc.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
-        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f"{player.title}"))
-
-
+        while self.queue.qsize() > 0:
+            url = self.queue.get()
+            async with context.typing():
+                player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+                vc.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f"{player.title}"))
 
     @commands.command()
     async def queue(self, context, *, url):
         self.queue.put(url)
-        await context.send(f"Queued {url}")
+        await context.send(f"Queued {url}", suppress_embeds=True)
 
     # @commands.command()
     # async def play(self, context, *, query):
@@ -175,6 +174,7 @@ class Music(commands.Cog):
 
         vc.resume()
         await context.send("Resuming ⏯️")
+
 
     @play.before_invoke
     @yt.before_invoke
