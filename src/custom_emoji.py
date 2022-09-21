@@ -8,3 +8,4 @@ class CustomEmoji:
     sussy = "<a:sussy:938104411866152970>"
     monkaSTEER = "<a:monkaSTEER:860219322554908742>"
     mods = "<a:MODS:922515013141401702>"
+    imok = "<:imok:1005889577862574090>"

@@ -120,6 +120,68 @@ class Sounds(discord.ui.View):
         url = 'https://www.youtube.com/watch?v=DQrUuRPDbwo'
         await self.play_sound(url, interaction)
 
+    @discord.ui.button(label='', style=discord.ButtonStyle.red, emoji='🪟')
+    async def windows(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=Gb2jGy76v0Y'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.blurple, emoji='🔫')
+    async def intervention(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=nL004eYKrEE'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.green, emoji='🏆')
+    async def win(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.myinstants.com/media/sounds/all-i-do-is-win.mp3'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.grey, emoji='👴')
+    async def sheesh(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=YgT6XABqS5Y'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.red, emoji='🔥')
+    async def supahot(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=Oys6-RrPPIE'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.blurple, emoji='☠')
+    async def minecraftdead(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=eXdJYdCqdgE'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.green, emoji='🐵')
+    async def monkey(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=NdlQqdJeV0Y'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.grey, emoji='🇫')
+    async def knew(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=gfXTcrxgNxY'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.red, emoji='🔄')
+    async def flip(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=AHJEY6WCMmw'
+        await self.play_sound(url, interaction)
+
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.blurple, emoji='📜')
+    async def message(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=rIPq9Fl5r44'
+        await self.play_sound(url, interaction)
+
+    @discord.ui.button(label='', style=discord.ButtonStyle.green, emoji='<:imok:1005889577862574090>')
+    async def whenyouhavetosayyouarefine(self, interaction: discord.Interaction, button: discord.ui.Button):
+        url = 'https://www.youtube.com/watch?v=86f50Zqpgwo'
+        await self.play_sound(url, interaction)
+
+    # @discord.ui.button(label='', style=discord.ButtonStyle.blurple, emoji='<:imok:1005889577862574090>')
+    # async def whenyousayyouarefine(self, interaction: discord.Interaction, button: discord.ui.Button):
+    #     url = 'https://www.youtube.com/watch?v=86f50Zqpgwo'
+    #     await self.play_sound(url, interaction)
+
+
 
 
 
