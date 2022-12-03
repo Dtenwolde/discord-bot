@@ -5,7 +5,7 @@ import pathlib
 
 import typing
 
-from src import bot_run
+from src import bot_run, add_all_cogs
 
 
 def create_directories():
@@ -28,6 +28,9 @@ def to_thread(func: typing.Callable) -> typing.Coroutine:
 def main():
     create_directories()
     from src import bot
+
+    bot.initialize()
+    add_all_cogs(bot)
     asyncio.run(bot_run())
     # bot.run(bot.token)
 

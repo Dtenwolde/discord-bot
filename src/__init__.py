@@ -15,9 +15,9 @@ from musicplayer.music import Music
 from musicplayer.soundboard import Soundboard
 from src.database.repository import music_repository, trigger_repository
 from league_api import LeagueAPI
-#from predictor import Predictor
-from score_api import PandaScoreAPI
 from musicplayer.musicplayer import MusicPlayer, Playlist
+from score_api import PandaScoreAPI
+from src.database.repository import music_repository, trigger_repository
 from src.musicplayer.youtube_search import YoutubeAPI
 from src.settings import Settings
 
@@ -36,6 +36,9 @@ class Bot(commands.Bot):
 
         self.triggers = dict()
 
+        print("Done initializing.")
+
+    def initialize(self):
         self.music_player = MusicPlayer(self)
         self.youtube_api = YoutubeAPI(self.config["DEFAULT"]["YoutubeAPIKey"])
         self.league_api = LeagueAPI(self, self.config["DEFAULT"]["LeagueAPIKey"])
@@ -51,10 +54,8 @@ class Bot(commands.Bot):
         # self.league_api.payout_games.start()
         # self.esports.payout_league_bet.start()
         self.token = self.config["DEFAULT"]["DiscordAPIKey"]
-
         # self.predictor = Predictor()
 
-        print("Done initializing.")
 
     def get_voice_by_guild(self, guild):
         for voice in self.voice_clients:
