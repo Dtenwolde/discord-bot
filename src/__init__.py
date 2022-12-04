@@ -118,6 +118,7 @@ async def add_all_cogs(bot):
     await bot.add_cog(Games(bot))
     await bot.add_cog(bot.esports)
     await bot.add_cog(bot.league_api)
+    await bot.add_cog(Soundboard(bot))
 
 
 intents = discord.Intents.default()
@@ -133,8 +134,7 @@ async def on_ready():
 
 async def bot_run():
     async with bot:
-        await bot.add_cog(Music(bot))
-        await bot.add_cog(Soundboard(bot))
+        await add_all_cogs(bot)
         await bot.start(bot.token)
 
 

@@ -39,7 +39,6 @@ class EnemyClass(MovableEntity):
         self.hp = 1
 
     def collide(self, other):
-        print(self.hp, other.card.damage_type, other.card.damage)
         if isinstance(other, SpellEntity):
             other: SpellEntity
             if other.card.damage_type != "heal":
@@ -75,6 +74,9 @@ class EnemyClass(MovableEntity):
         pass
 
     def prepare_movement(self):
+        if self.dead:
+            return
+
         # TODO: Pathfinding to nearest player
         self.movement_queue = [
             Point(-1, 0),

@@ -30,7 +30,6 @@ def main():
     from src import bot
 
     bot.initialize()
-    add_all_cogs(bot)
     asyncio.run(bot_run())
     # bot.run(bot.token)
 

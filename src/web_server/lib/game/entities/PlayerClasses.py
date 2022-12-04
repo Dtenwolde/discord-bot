@@ -301,6 +301,9 @@ class PlayerClass(MovableEntity):
         if n_action >= len(self.hand):
             return
 
+        if self.mana < self.hand[n_action].mana_cost:
+            return
+
         if self.queued_spell == n_action:
             self.queued_spell = None
         else:
@@ -308,8 +311,9 @@ class PlayerClass(MovableEntity):
 
     def post_movement_action(self):
         if self.queued_spell is not None:
-            # TODO: Generate unique id for this spell.
-            self.game.entities.append(SpellEntity(self, self.hand[self.queued_spell], "ashdioahd", self.game))
+            spell = self.hand.pop(self.queued_spell)
+            self.mana -= spell.mana_cost
+            self.game.entities.append(SpellEntity(self, spell, f"{self.color}_{self.queued_spell}", self.game))
 
         # Only draw new card when less than 8 are in hand.
         if len(self.hand) != self.MAX_HAND_SIZE:
