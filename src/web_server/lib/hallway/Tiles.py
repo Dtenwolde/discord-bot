@@ -1,7 +1,7 @@
 from typing import Optional
 
-from src.web_server.lib.game.Items import Item
-from src.web_server.lib.game.Utils import Point
+from src.web_server.lib.hallway.Items import Item
+from src.web_server.lib.hallway.Utils import Point
 
 
 class Tile:

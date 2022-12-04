@@ -7,13 +7,13 @@ from typing import List, Optional
 
 from src.web_server import sio
 
-from src.web_server.lib.game.Tiles import Tile, UnknownTile, ChestTile
-from src.web_server.lib.game.Utils import Point
-from src.web_server.lib.game.generator import generate_board
-from src.web_server.lib.game.entities.Enemies import EnemyClass
-from src.web_server.lib.game.entities.PlayerClasses import Demolisher, PlayerClass, PlayerState, Wizard
-from src.web_server.lib.game.entities.movable_entity import MovableEntity
-from src.web_server.lib.game.exceptions import InvalidAction
+from src.web_server.lib.hallway.Tiles import Tile, UnknownTile, ChestTile
+from src.web_server.lib.hallway.Utils import Point
+from src.web_server.lib.hallway.generator import generate_board
+from src.web_server.lib.hallway.entities.Enemies import EnemyClass
+from src.web_server.lib.hallway.entities.PlayerClasses import Demolisher, PlayerClass, PlayerState, Wizard
+from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
+from src.web_server.lib.hallway.exceptions import InvalidAction
 
 print(f"Imported {__name__}")
 

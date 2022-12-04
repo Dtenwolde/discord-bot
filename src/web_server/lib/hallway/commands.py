@@ -1,7 +1,7 @@
 from database.repository import profile_repository
-from src.web_server.lib.game.HallwayHunters import Phases
-from src.web_server.lib.game.Utils import Point
-from src.web_server.lib.game.exceptions import InvalidCommand
+from src.web_server.lib.hallway.HallwayHunters import Phases
+from src.web_server.lib.hallway.Utils import Point
+from src.web_server.lib.hallway.exceptions import InvalidCommand
 
 
 def teleport_command(text_message, player, game):

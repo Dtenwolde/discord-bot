@@ -1,10 +1,10 @@
 from typing import List
 
-from src.web_server.lib.game.Utils import Point, EntityDirections, direction_to_point
-from src.web_server.lib.game.exceptions import InvalidAction
-from src.web_server.lib.game.entities.movable_entity import MovableEntity
-from src.web_server.lib.game.entities.Spell import SpellEntity
-from src.web_server.lib.game.entities.Passive import Passive
+from src.web_server.lib.hallway.Utils import Point, EntityDirections, direction_to_point
+from src.web_server.lib.hallway.exceptions import InvalidAction
+from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
+from src.web_server.lib.hallway.entities.Spell import SpellEntity
+from src.web_server.lib.hallway.entities.Passive import Passive
 
 
 class EnemyClass(MovableEntity):
@@ -29,7 +29,7 @@ class EnemyClass(MovableEntity):
 
         self.direction = EntityDirections.DOWN
 
-        from src.web_server.lib.game.HallwayHunters import HallwayHunters
+        from src.web_server.lib.hallway.HallwayHunters import HallwayHunters
         self.game: HallwayHunters = game
 
         self.passives: List[Passive] = []

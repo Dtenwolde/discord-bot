@@ -1,6 +1,6 @@
-from src.web_server.lib.game.Utils import direction_to_point
-from src.web_server.lib.game.cards.Card import Card
-from src.web_server.lib.game.entities.movable_entity import MovableEntity
+from src.web_server.lib.hallway.Utils import direction_to_point
+from src.web_server.lib.hallway.cards.Card import Card
+from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 
 
 class SpellEntity(MovableEntity):

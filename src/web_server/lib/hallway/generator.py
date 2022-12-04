@@ -3,9 +3,9 @@ import random
 import time
 from typing import List, Tuple
 
-from src.web_server.lib.game.Items import RubbishItem, CollectorItem
-from src.web_server.lib.game.Tiles import *
-from src.web_server.lib.game.Utils import Point
+from src.web_server.lib.hallway.Items import RubbishItem, CollectorItem
+from src.web_server.lib.hallway.Tiles import *
+from src.web_server.lib.hallway.Utils import Point
 
 
 def room_generator(board: List[List[Tile]], size, attempts=50):

@@ -2,16 +2,16 @@ import copy
 import random
 from typing import Optional, List
 
-from src.web_server.lib.game.Items import Item, CollectorItem
-from src.web_server.lib.game.Tiles import GroundTile, ChestTile
-from src.web_server.lib.game.Utils import Point, EntityDirections, line_of_sight_endpoints, \
+from src.web_server.lib.hallway.Items import Item, CollectorItem
+from src.web_server.lib.hallway.Tiles import GroundTile, ChestTile
+from src.web_server.lib.hallway.Utils import Point, EntityDirections, line_of_sight_endpoints, \
     point_interpolator
-from src.web_server.lib.game.exceptions import InvalidAction
-from src.web_server.lib.game.cards.Card import available_cards, Card
-from src.web_server.lib.game.entities.Spell import SpellEntity
-from src.web_server.lib.game.entities.movable_entity import MovableEntity
-from src.web_server.lib.game.entities.Enemies import EnemyClass
-from src.web_server.lib.game.entities.Passive import Passive
+from src.web_server.lib.hallway.exceptions import InvalidAction
+from src.web_server.lib.hallway.cards.Card import available_cards, Card
+from src.web_server.lib.hallway.entities.Spell import SpellEntity
+from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
+from src.web_server.lib.hallway.entities.Enemies import EnemyClass
+from src.web_server.lib.hallway.entities.Passive import Passive
 
 DEMOLISHER_COOLDOWN = 30  # Seconds
 SPY_COOLDOWN = 30  # Seconds
@@ -63,7 +63,7 @@ class PlayerClass(MovableEntity):
 
         self.visible_tiles = []
 
-        from web_server.lib.game.HallwayHunters import HallwayHunters
+        from web_server.lib.hallway.HallwayHunters import HallwayHunters
         self.game: HallwayHunters = game
 
         self.socket = socket_id
