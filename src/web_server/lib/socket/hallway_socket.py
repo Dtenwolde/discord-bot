@@ -4,7 +4,7 @@ from flask import request
 from flask_socketio import join_room
 
 from src.web_server import session_user, sio, timing
-from src.web_server.lib.hallway.HallwayHunters import HallwayHunters, Phases
+from src.web_server.lib.hallway.hallway_hunters import HallwayHunters, Phases
 from src.web_server.lib.hallway.commands import handle_developer_command
 from src.web_server.lib.hallway.exceptions import InvalidAction, InvalidCommand
 from src.web_server.lib.user_session import session_user_set

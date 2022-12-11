@@ -1,6 +1,7 @@
 from typing import List
 
 from src.web_server.lib.hallway.Utils import Point, EntityDirections, direction_to_point
+from src.web_server.lib.hallway.algorithms import pathfinding
 from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 from src.web_server.lib.hallway.entities.Spell import SpellEntity
@@ -11,7 +12,7 @@ import uuid
 class EnemyClass(MovableEntity):
     def __init__(self, sprite_name: str, game):
         super().__init__(game)
-        self.MAX_MOVEMENT = 10
+        self.MAX_MOVEMENT = 6
         self.sprite_name = sprite_name
         self.spawn_position = Point(1, 1)
         self.position = Point(1, 1)
@@ -30,7 +31,7 @@ class EnemyClass(MovableEntity):
 
         self.direction = EntityDirections.DOWN
 
-        from src.web_server.lib.hallway.HallwayHunters import HallwayHunters
+        from src.web_server.lib.hallway.hallway_hunters import HallwayHunters
         self.game: HallwayHunters = game
 
         self.passives: List[Passive] = []
@@ -79,21 +80,8 @@ class EnemyClass(MovableEntity):
         if self.dead:
             return
 
-        # TODO: Pathfinding to nearest player
-        self.movement_queue = [
-            Point(-1, 0),
-            Point(-1, 0),
-            Point(-1, 0),
-            Point(0, -1),
-            Point(0, -1),
-            Point(0, -1),
-            Point(1, 0),
-            Point(1, 0),
-            Point(1, 0),
-            Point(0, 1),
-            Point(0, 1),
-            Point(0, 1),
-        ]
+        path = pathfinding.astar(self.game.board, self.position, self.game.player_list[0].position)
+        self.movement_queue = path[:self.MAX_MOVEMENT]
 
 
 class Slime(EnemyClass):

@@ -33,6 +33,9 @@ class Point:
     def __hash__(self):
         return hash((self.x, self.y))
 
+    def __lt__(self, other):
+        return -1
+
     def __mul__(self, other):
         if isinstance(other, int) or isinstance(other, float):
             return Point(self.x * other, self.y * other)

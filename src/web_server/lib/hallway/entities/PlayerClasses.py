@@ -63,7 +63,7 @@ class PlayerClass(MovableEntity):
 
         self.visible_tiles = []
 
-        from src.web_server.lib.hallway.HallwayHunters import HallwayHunters
+        from src.web_server.lib.hallway.hallway_hunters import HallwayHunters
         self.game: HallwayHunters = game
 
         self.socket = socket_id

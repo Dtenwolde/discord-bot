@@ -5,6 +5,8 @@ from src.web_server.lib.hallway.exceptions import InvalidAction
 
 
 class MovableEntity:
+    MAX_MOVEMENT = 10
+
     def __init__(self, game, unique_identifier=None):
         if unique_identifier is None:
             unique_identifier = str(uuid.uuid4())
@@ -27,7 +29,7 @@ class MovableEntity:
 
         self.direction = EntityDirections.DOWN
 
-        from src.web_server.lib.hallway.HallwayHunters import HallwayHunters
+        from src.web_server.lib.hallway.hallway_hunters import HallwayHunters
         self.game: HallwayHunters = game
 
     def start(self):

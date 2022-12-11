@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from src.web_server import sio
+from src.web_server import sio, timing
 
 from src.web_server.lib.hallway import tiles
 from src.web_server.lib.hallway.Utils import Point
@@ -378,6 +378,7 @@ class HallwayHunters:
             "tile": tile.to_json()
         })
 
+    @timing
     def increment_turn(self):
         self.turn += 1
         self.processing_entities = True
