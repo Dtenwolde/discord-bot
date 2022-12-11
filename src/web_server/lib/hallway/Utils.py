@@ -10,6 +10,18 @@ class Point:
     def to_json(self):
         return {"x": self.x, "y": self.y}
 
+    def distance(self, other):
+        if isinstance(other, Point):
+            return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
+        else:
+            raise NotImplemented("Only distance with another Point can be computed.")
+
+    def manhattan_distance(self, other):
+        if isinstance(other, Point):
+            return abs(self.x - other.x) + abs(self.y - other.y)
+        else:
+            raise NotImplemented("Only distance with another Point can be computed.")
+
     def __str__(self):
         return f"({self.x}, {self.y})"
 
@@ -39,13 +51,13 @@ class Point:
         if isinstance(other, Point):
             return Point(self.x + other.x, self.y + other.y)
         else:
-            raise NotImplemented("Only multiplying with another Point is implemented.")
+            raise NotImplemented("Only adding with another Point is implemented.")
 
     def __sub__(self, other):
         if isinstance(other, Point):
             return Point(self.x - other.x, self.y - other.y)
         else:
-            raise NotImplemented("Only multiplying with another Point is implemented.")
+            raise NotImplemented("Only subtracting with another Point is implemented.")
 
     def __round__(self, n=None):
         return Point(round(self.x, n), round(self.y, n))

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from database.repository import profile_repository
+from src.database.repository import profile_repository
 from src.web_server import sio
 from src.web_server.lib.poker import Evaluator
 from src.web_server.lib.poker.exceptions import PokerException

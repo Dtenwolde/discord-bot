@@ -5,11 +5,12 @@ from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 from src.web_server.lib.hallway.entities.Spell import SpellEntity
 from src.web_server.lib.hallway.entities.Passive import Passive
+import uuid
 
 
 class EnemyClass(MovableEntity):
-    def __init__(self, sprite_name: str, game, unique_identifier: str):
-        super().__init__(unique_identifier, game)
+    def __init__(self, sprite_name: str, game):
+        super().__init__(game)
         self.MAX_MOVEMENT = 10
         self.sprite_name = sprite_name
         self.spawn_position = Point(1, 1)
@@ -53,6 +54,7 @@ class EnemyClass(MovableEntity):
     def die(self):
         self.dead = True
         self.can_move = False
+        self.movement_queue.clear()
 
     def tick(self):
         super().tick()
@@ -92,3 +94,9 @@ class EnemyClass(MovableEntity):
             Point(0, 1),
             Point(0, 1),
         ]
+
+
+class Slime(EnemyClass):
+    def __init__(self, game):
+        super().__init__("slime", game)
+        self.hp = 2

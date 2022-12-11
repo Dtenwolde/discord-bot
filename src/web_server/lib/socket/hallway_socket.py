@@ -13,7 +13,6 @@ games: Dict[int, HallwayHunters] = {}
 
 
 @sio.on('ping', namespace="/hallway")
-@timing
 def ping():
     sio.emit("pong", room=request.sid, namespace="/hallway")
 

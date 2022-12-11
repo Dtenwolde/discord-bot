@@ -1,4 +1,4 @@
-from database.repository import profile_repository
+from src.database.repository import profile_repository
 from src.web_server.lib.hallway.HallwayHunters import Phases
 from src.web_server.lib.hallway.Utils import Point
 from src.web_server.lib.hallway.exceptions import InvalidCommand

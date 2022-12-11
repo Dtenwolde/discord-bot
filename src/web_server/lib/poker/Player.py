@@ -1,4 +1,4 @@
-from database.repository import profile_repository
+from src.database.repository import profile_repository
 
 
 class Player:

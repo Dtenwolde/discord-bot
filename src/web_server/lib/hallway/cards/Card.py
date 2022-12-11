@@ -18,7 +18,7 @@ class DamageTypes:
 
 
 class Card:
-    def __init__(self, name, description, ability_range, radius, mana_cost, damage, damage_type: str):
+    def __init__(self, name, description, ability_range, radius, mana_cost, damage, damage_type: str, animation_length):
         super().__init__()
         self.name = name
         self.description = description
@@ -27,12 +27,13 @@ class Card:
         self.mana_cost = mana_cost
         self.damage = damage
         self.damage_type = damage_type
+        self.animation_length = animation_length
 
 
 # TODO: Move this to a nice initializer
 available_cards = {}
 
-with open("src/web_server/lib/game/cards/cards.json") as f:
+with open("src/web_server/lib/hallway/cards/cards.json") as f:
     cards = json.load(f)
 
 for card_dict in cards:

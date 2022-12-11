@@ -99,11 +99,7 @@ function gameLoop() {
         game.statsText.frameTime.text = "Frame time: " + round(game.stats.frameTime.get()) + " ms";
 
         // Compute the offset for all tiles, to center rendering on the player.
-        try {
-            view.render();
-        } catch (e) {
-            console.log(e);
-        }
+        view.render();
     }
 }
 

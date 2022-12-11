@@ -1,9 +1,39 @@
 export const COLORS = ["blue", "red", "green", "purple", "black"];
 
 
+function rotateImageData(context, imageData, degrees) {
+    // Copy input image to create place to generate new image to.
+    let output = context.createImageData(imageData.width, imageData.height);
+
+    let w = imageData.width;
+    let h = imageData.height;
+    let center = {x: w / 2, y: h / 2};
+
+    let radians = (degrees * Math.PI / 180);
+    for (let x = 0; x < w; x++) {
+        for (let y = 0; y < h; y++) {
+            // Compute vector angle and size
+            let vx = x - center.x;
+            let vy = y - center.y;
+            let angle = Math.atan2(vx, vy) + radians;
+            let size = Math.sqrt(vx * vx + vy * vy);
+
+            // Compute new position of pixel.
+            let newY = Math.sin(angle) * size + center.x;
+            let newX = Math.cos(angle) * size + center.y;
+
+            for (let c = 0; c < 4; c++) {
+                output.data[Math.round((newY * w + newX) * 4 + c)] = imageData.data[Math.round((y * w + x) * 4 + c)];
+            }
+        }
+    }
+    return output;
+}
+
 export class TileSet {
     constructor() {
     }
+
     tiles = {};
 
     splitTileset(tileSet) {
@@ -54,6 +84,13 @@ export class TileSet {
 
         this.tiles["inner_corner_tl"] = context.getImageData(5 * S, S, S, S);
         this.tiles["inner_corner_tl_top"] = context.getImageData(5 * S, 0, S, S);
+
+        this.tiles["totem_top_left"] = context.getImageData(10 * S, 0, S, S);
+        this.tiles["totem_mid_left"] = context.getImageData(10 * S, S, S, S);
+        this.tiles["totem_bot_left"] = context.getImageData(10 * S, 2 * S, S, S);
+        this.tiles["totem_top_right"] = context.getImageData(11 * S, 0, S, S);
+        this.tiles["totem_mid_right"] = context.getImageData(11 * S, S, S, S);
+        this.tiles["totem_bot_right"] = context.getImageData(11 * S, 2 * S, S, S);
 
         this.tiles["edge_t"] = context.getImageData(6 * S, 3 * S, S, S);
         this.tiles["edge_t_alt1"] = context.getImageData(7 * S, 5 * S, S, S);
@@ -111,10 +148,23 @@ export class TileSet {
 
         // Load all spells into the tiles object
         for (let i = 0; i < 2; i++) {
-            this.tiles["spear_270_" + i] = context.getImageData((19 + i + 0) * S, 12 * S, S, S);
-            this.tiles["spear_0_" + i] = context.getImageData((19 + i + 2) * S, 12 * S, S, S);
-            this.tiles["spear_180_" + i] = context.getImageData((19 + i + 4) * S, 12 * S, S, S);
-            this.tiles["spear_90_" + i] = context.getImageData((19 + i + 6) * S, 12 * S, S, S);
+            let data = context.getImageData((19 + i) * S, 12 * S, S, S);
+            this.tiles["spear_270_" + i] = data;
+            this.tiles["spear_0_" + i] = rotateImageData(context, data, 0);
+            this.tiles["spear_90_" + i] = rotateImageData(context, data, 90);
+            this.tiles["spear_180_" + i] = rotateImageData(context, data, 180);
+        }
+        // Axe animation is a rotation
+        for (let i = 0; i < 4; i++) {
+            this.tiles["axe_270_" + i] = context.getImageData((21 + i) * S, 12 * S, S, S);
+            this.tiles["axe_0_" + i] = context.getImageData((21 + i) * S, 12 * S, S, S);
+            this.tiles["axe_90_" + i] = context.getImageData((21 + i) * S, 13 * S, S, S);
+            this.tiles["axe_180_" + i] = context.getImageData((21 + i) * S, 13 * S, S, S);
+        }
+        // Heal animation takes 5 unique frames, last one is repeated and zoomed in multiple times
+        // Heal has no rotation
+        for (let i = 0; i < 5; i++) {
+            this.tiles["heal_" + i] = context.getImageData((19 + i) * S, 14 * S, S, S);
         }
 
 

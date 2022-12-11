@@ -5,7 +5,7 @@ from discord.ext.commands import Context
 
 from src.database import mongodb as db
 from src.database.repository import profile_repository
-from custom_emoji import CustomEmoji
+from src.custom_emoji import CustomEmoji
 
 NAME_CHANGE_COST = 10
 

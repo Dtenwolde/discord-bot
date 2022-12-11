@@ -8,7 +8,7 @@ import requests
 from discord import Message
 from discord.ext import commands
 from discord.ext.commands import Context
-from custom_emoji import CustomEmoji
+from src.custom_emoji import CustomEmoji
 
 from src.database.models.models import Trigger
 from src.database.repository import trigger_repository, profile_repository

@@ -1,3 +1,4 @@
+import logging
 import random
 import threading
 import time
@@ -7,13 +8,14 @@ from typing import List, Optional
 
 from src.web_server import sio
 
-from src.web_server.lib.hallway.Tiles import Tile, UnknownTile, ChestTile
+from src.web_server.lib.hallway import tiles
 from src.web_server.lib.hallway.Utils import Point
-from src.web_server.lib.hallway.generator import generate_board
-from src.web_server.lib.hallway.entities.Enemies import EnemyClass
+from src.web_server.lib.hallway.entities.Enemies import EnemyClass, Slime
 from src.web_server.lib.hallway.entities.PlayerClasses import Demolisher, PlayerClass, PlayerState, Wizard
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 from src.web_server.lib.hallway.exceptions import InvalidAction
+from src.web_server.lib.hallway.entities.Spawner import EntitySpawner
+from src.web_server.lib.hallway.generator import Generator
 
 print(f"Imported {__name__}")
 
@@ -34,17 +36,19 @@ class HallwayHunters:
 
         self.color_pool = ["blue", "red", "black", "purple", "green"]
 
-        self.spawn_points: List[Point] = []
-        self.board: List[List[Tile]] = []
+        self.generator = Generator(self.size)
+        self.room_centers: List[Point] = []
+        self.board: List[List[tiles.Tile]] = []
         self.enemies: List[EnemyClass] = []
         self.entities: List[MovableEntity] = []
 
         # Generate this to send to every player initially
-        self.initial_board_json = [[UnknownTile().to_json() for _ in range(self.size)] for _ in range(self.size)]
+        self.initial_board_json = [[tiles.UnknownTile().to_json() for _ in range(self.size)] for _ in range(self.size)]
         self.updated_line_of_sight = True
 
         self.spent_time = 0.00001
         self.ticks = 0
+        self.processing_entities = False
         self.turn = 0
         self.finished = False
 
@@ -53,12 +57,27 @@ class HallwayHunters:
 
         self.board_changes = []
 
+    def generate_spawners(self, n=2):
+        assert n < len(self.room_centers)
+
+        points = random.sample(self.room_centers, n)
+        self.room_centers = [center for center in self.room_centers if center not in points]
+        print(points)
+        for point in points:
+            spawner = EntitySpawner(self, Slime)
+            spawner.position = point
+            self.entities.append(spawner)
+            self.board[point.x][point.y - 1] = tiles.TotemTopLeft()
+            self.board[point.x][point.y] = tiles.TotemMidLeft()
+            self.board[point.x][point.y + 1] = tiles.TotemBotLeft()
+            self.board[point.x + 1][point.y - 1] = tiles.TotemTopRight()
+            self.board[point.x + 1][point.y] = tiles.TotemMidRight()
+            self.board[point.x + 1][point.y + 1] = tiles.TotemBotRight()
+
     def start(self):
         if self.phase == Phases.STARTED:
             return
         self.phase = Phases.STARTED
-
-        self.board, self.spawn_points = generate_board(self.size, self.room_id)
 
         class_pool = PlayerClass.__subclasses__()
         random.shuffle(class_pool)
@@ -66,7 +85,11 @@ class HallwayHunters:
             new_player = player.convert_class(Wizard)
             self.set_player(player.username, new_player)
 
-        spawn_point = random.choice(self.spawn_points)
+        # Generate current floor of the dungeon
+        self.board, self.room_centers = self.generator.generate_board(self.size, self.room_id)
+        self.generate_spawners(4)
+
+        spawn_point = random.choice(self.room_centers)
         spawn_point_modifier = [
             Point(0, 0),
             Point(1, 0),
@@ -82,13 +105,13 @@ class HallwayHunters:
             player.start()
             sio.emit("game_state", self.export_board(player), room=player.socket, namespace="/hallway")
 
-        self.enemies.append(EnemyClass("slime", self, "slime0"))
+        self.enemies.append(Slime(self))
         self.enemies[0].change_position(spawn_point + spawn_point_modifier[-1])
 
         self.turn = 0
 
         # Connect chest to player
-        chest = ChestTile(self.player_list[0])
+        chest = tiles.ChestTile(self.player_list[0])
         self.board[spawn_point.x][spawn_point.y + 1] = chest
         chest.image = "chest_%s" % self.player_list[0].color
 
@@ -117,11 +140,18 @@ class HallwayHunters:
                 # Fill time sleeping while waiting for next tick
                 time.sleep(s_per_tick - diff)
 
+                logger = logging.getLogger("timing")
+                logger.info(f"game_loop: {diff}")
+
             self.game_lock.acquire()
             self.game_lock.wait()
             self.game_lock.release()
 
     def process_entities(self):
+        """
+        Process all entities, returns False if nothing else needs to be done.
+        :return:
+        """
         for entity in self.entities:
             if entity.movement_timer == 0:
                 try:
@@ -132,13 +162,13 @@ class HallwayHunters:
         # Check if everybody has finished their movement
         for entity in self.entities:
             if len(entity.movement_queue) != 0 or entity.movement_timer != 0:
-                return False
+                return True
 
         for entity in self.entities:
             entity.post_movement_action()
 
         self.entities = [entity for entity in self.entities if entity.alive]
-        return True
+        return False
 
     def process_player_turn(self):
         for player in self.player_list:
@@ -162,7 +192,6 @@ class HallwayHunters:
 
         # If all movement has been processed, process all queued spells
         for player in self.player_list:
-            print("Done with turn now...")
             # Do end-of-turn stat updates and allow for new inputs.
             player.post_movement_action()
             player.action_state = PlayerState.NOT_READY
@@ -174,17 +203,16 @@ class HallwayHunters:
             if enemy.movement_timer == 0:
                 try:
                     enemy.movement_action()
-                    self.updated_line_of_sight = True
-                except:
-                    pass
 
+                    self.updated_line_of_sight = True
+                except InvalidAction:
+                    pass
         for enemy in self.enemies:
             if len(enemy.movement_queue) != 0 or enemy.movement_timer != 0:
                 return
 
         # If all movement has been processed, process all queued spells
         for enemy in self.enemies:
-            print("Done with turn now...")
             # Do end-of-turn stat updates and allow for new inputs.
             enemy.post_movement_action()
 
@@ -196,8 +224,8 @@ class HallwayHunters:
             entity.tick()
 
         # Resolve entities in progress
-        if not self.process_entities():
-            pass
+        if self.processing_entities:
+            self.processing_entities = self.process_entities()
         # Player turn
         elif self.turn % 2 == 0:
             for player in self.player_list:
@@ -340,7 +368,7 @@ class HallwayHunters:
     def in_bounds(self, position):
         return 1 < position.x < self.size - 2 and 1 < position.y < self.size - 2
 
-    def change_tile(self, position, tile: Tile):
+    def change_tile(self, position, tile: tiles.Tile):
         if not self.in_bounds(position):
             return
         self.board[position.x][position.y] = tile
@@ -352,6 +380,7 @@ class HallwayHunters:
 
     def increment_turn(self):
         self.turn += 1
+        self.processing_entities = True
         if self.turn % 2 == 1:
             # We just started an enemy turn, prepare all movement for the enemies
             for enemy in self.enemies:
@@ -362,5 +391,4 @@ class HallwayHunters:
         all_entities.extend([x for x in self.player_list if x.position == position])
         all_entities.extend([x for x in self.entities if x.position == position])
         all_entities.extend([x for x in self.enemies if x.position == position])
-        print(position, all_entities)
         return all_entities

@@ -6,27 +6,27 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound, BadArgument
 
-from commands.chat import Chat
-from commands.currency import Currency
-from commands.games import Games
-from commands.lolesports import Esports
-from commands.reputation import Reputation
-from musicplayer.music import Music
-from musicplayer.soundboard import Soundboard
+from src.commands.chat import Chat
+from src.commands.currency import Currency
+from src.commands.games import Games
+from src.commands.lolesports import Esports
+from src.commands.reputation import Reputation
+from src.musicplayer.music import Music
+from src.musicplayer.soundboard import Soundboard
 from src.database.repository import music_repository, trigger_repository
-from league_api import LeagueAPI
-from musicplayer.musicplayer import MusicPlayer, Playlist
-from score_api import PandaScoreAPI
+from src.league_api import LeagueAPI
+from src.musicplayer.musicplayer import MusicPlayer, Playlist
+from src.score_api import PandaScoreAPI
 from src.database.repository import music_repository, trigger_repository
 from src.musicplayer.youtube_search import YoutubeAPI
 from src.settings import Settings
 
 
-class Bot(commands.Bot):
+class Bot(discord.ext.commands.Bot):
     commands = {}
 
     def __init__(self, config, intents):
-        super().__init__(command_prefix=commands.when_mentioned_or("!"), intents=intents)
+        super().__init__(command_prefix=discord.ext.commands.when_mentioned_or("!"), intents=intents)
 
         # Load config settings
         self.config = configparser.ConfigParser()

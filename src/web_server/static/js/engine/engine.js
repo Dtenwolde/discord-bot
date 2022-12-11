@@ -71,25 +71,62 @@ export class SpriteTile extends Rectangle {
 }
 
 export class AnimatedSpriteTile extends SpriteTile {
-    constructor(images) {
+    constructor(images, optionalArgs) {
         if (images.length === 0) throw Error("AnimatedSpriteTile must have at least one image.");
         super(images[0]);
 
         this.frame = 0;
         this.frameTime = 6; // N ticks per frame
         this.images = images;
+        this.loop = true;
+
+        this.zooms = undefined;
+
+        if (optionalArgs !== undefined) {
+            // Zoom per frame is optionally defined
+            if (optionalArgs.zooms !== undefined) {
+                this.zooms = optionalArgs.zooms;
+            }
+            if (optionalArgs.loop !== undefined) {
+                this.loop = optionalArgs.loop;
+            }
+        }
     }
 
     render(context) {
+        if (!this.loop && this.frame + 1 === this.images.length * this.frameTime) {
+            // If we aren't looping the animation, stop rendering this sprite.
+            // TODO: Delete this object from the sprite manager
+            console.log("Not looping")
+            return;
+        }
+
         this.frame = (this.frame + 1) % (this.images.length * this.frameTime);
-        this.setImage(this.images[Math.floor(this.frame / this.frameTime)]);
+        // TODO: Merge this class with AnimatedDirectionalSpriteTile
+        let frame_idx = Math.floor(this.frame / this.frameTime);
+
+        let b = {x: this.x, y: this.y, width: this.width, height: this.height};
+
+        if (this.zooms !== undefined) {
+            this.width *= this.zooms[frame_idx];
+            this.height *= this.zooms[frame_idx];
+            this.x -= (this.width - b.width) / 2;
+            this.y -= (this.height - b.height) / 2;
+        }
+
+        this.setImage(this.images[frame_idx]);
         super.render(context);
+
+        this.x = b.x;
+        this.y = b.y;
+        this.width = b.width;
+        this.height = b.height;
     }
 }
 
 
 export class DirectionalAnimatedSpriteTile extends SpriteTile {
-    constructor(imN, imE, imS, imW) {
+    constructor(imN, imE, imS, imW, optionalArgs) {
         for (let im in [imN, imE, imS, imW]) {
             if (im.length === 0) throw Error("All orientation animations must have at least one image.");
         }
@@ -106,8 +143,14 @@ export class DirectionalAnimatedSpriteTile extends SpriteTile {
         this.frame = 0;
         this.frameTime = 6; // N ticks per frame
         this.orientation = 180;
+        this.zooms = undefined;
 
-        console.log(this.orientations);
+        if (optionalArgs !== undefined) {
+            // Zoom per frame is optionally defined
+            if (optionalArgs.zooms !== undefined) {
+                this.zooms = optionalArgs.zooms;
+            }
+        }
     }
 
     render(context) {
@@ -115,8 +158,24 @@ export class DirectionalAnimatedSpriteTile extends SpriteTile {
 
         this.frame = (this.frame + 1) % (currentAnimation.images.length * this.frameTime);
         let frame_idx = Math.floor(this.frame / this.frameTime);
+
+        let b = {x: this.x, y: this.y, width: this.width, height: this.height};
+
+        if (this.zooms !== undefined) {
+            this.width *= this.zooms[frame_idx];
+            this.height *= this.zooms[frame_idx];
+            this.x -= (this.width - b.width) / 2;
+            this.y -= (this.height - b.height) / 2;
+        }
+
         this.setImage(currentAnimation.images[frame_idx]);
+
         super.render(context);
+
+        this.x = b.x;
+        this.y = b.y;
+        this.width = b.width;
+        this.height = b.height;
     }
 }
 

@@ -2,7 +2,7 @@ from discord.ext import commands, tasks
 from discord.ext.commands import Context
 from discord import Embed, User
 
-from custom_emoji import CustomEmoji
+from src.custom_emoji import CustomEmoji
 from src.database import mongodb as db
 from src.database.models.models import EsportGame
 from src.database.repository import game_repository, profile_repository

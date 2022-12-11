@@ -1,11 +1,16 @@
+import uuid
+
 from src.web_server.lib.hallway.Utils import Point, EntityDirections, direction_to_point
 from src.web_server.lib.hallway.exceptions import InvalidAction
 
 
 class MovableEntity:
-    def __init__(self, unique_identifier: str, game):
+    def __init__(self, game, unique_identifier=None):
+        if unique_identifier is None:
+            unique_identifier = str(uuid.uuid4())
         self.uid = unique_identifier
         self.position = Point(1, 1)
+        self.sprite_name = None
 
         self.last_position = self.position
         self.class_name = None
@@ -88,6 +93,9 @@ class MovableEntity:
         pass
 
     def get_interpolated_position(self):
+        if self.direction is None:
+            return self.position
+
         progress = self.movement_timer / self.movement_cooldown
 
         position = self.position + (-1 * direction_to_point(self.direction)) * progress
@@ -97,10 +105,14 @@ class MovableEntity:
         state = {
             "uid": self.uid,
             "position": self.get_interpolated_position().to_json(),
-            "direction": self.direction.value,
+            "direction": self.direction.value if self.direction is not None else None,
             "moving": self.moving,
         }
         return state
+
+    def die(self):
+        self.alive = False
+        self.game.entities.remove(self)
 
     def post_movement_action(self):
         pass

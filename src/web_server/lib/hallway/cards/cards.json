@@ -5,7 +5,8 @@
   "radius": 0,
   "mana_cost": 1,
   "damage": 1,
-  "damage_type": "prc"
+  "damage_type": "prc",
+  "animation_length": 10
 },{
   "name": "heal",
   "description": "This will heal you\nand all allies within\n3 squares of yourself.",
@@ -13,7 +14,8 @@
   "radius": 3,
   "mana_cost": 3,
   "damage": 5,
-  "damage_type": "heal"
+  "damage_type": "heal",
+  "animation_length": 8
 },{
   "name": "fireball",
   "description": "El classico.",
@@ -21,5 +23,15 @@
   "radius": 3,
   "mana_cost": 5,
   "damage": 2,
-  "damage_type": "fire"
+  "damage_type": "fire",
+  "animation_length": 8
+},{
+  "name": "axe",
+  "description": "Ooga booga!\nMe Slash!",
+  "ability_range": 5,
+  "radius": 0,
+  "mana_cost": 4,
+  "damage": 7,
+  "damage_type": "prc",
+  "animation_length": 5
 }]

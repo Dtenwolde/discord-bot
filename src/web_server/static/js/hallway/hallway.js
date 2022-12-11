@@ -1,7 +1,7 @@
 import {
     DrawableText,
     RollingAverage,
-    Point, Rectangle, ColorTile, SpriteTile, DirectionalAnimatedSpriteTile
+    Point, Rectangle, ColorTile, SpriteTile, DirectionalAnimatedSpriteTile, AnimatedSpriteTile
 } from "../engine/engine.js";
 import {COLORS} from "./resources.js";
 import {Card, CARDBACK_COLOR, CARDBACK_SELECTED_COLOR, DAMAGE_COLOR, Player} from "./player.js";
@@ -60,8 +60,7 @@ export class HallwayHunters {
         visible_tiles: [
             {x: 0, y: 0, tile: {}}
         ],
-        visible_enemies: [
-        ],
+        visible_enemies: [],
         board: [],
 
     };
@@ -124,7 +123,6 @@ export class HallwayHunters {
         // Add enemy objects to view, and update those that exist
         data.visible_enemies.forEach(enemy => {
             let enemyObj = this.enemies[enemy.uid];
-            console.log(enemy.uid);
             if (enemyObj === undefined) {
                 let src = this.enemySprites[enemy.sprite_name];
                 enemyObj = Object.assign(Object.create(Object.getPrototypeOf(src)), src)
@@ -135,11 +133,11 @@ export class HallwayHunters {
             enemyObj.renderable = !enemy.dead;
             enemyObj.x = enemy.position.x * 16;
             enemyObj.y = enemy.position.y * 16;
-            enemyObj.orientqation = enemy.direction;
+            enemyObj.orientation = enemy.direction;
         });
 
         data.visible_entities.forEach(entity => {
-            console.log(entity.position.x, entity.position.y)
+            if (entity.sprite_name === undefined) return;
             let entityObj = this.entities[entity.uid];
             if (entityObj === undefined) {
                 let src = this.entitySprites[entity.sprite_name];
@@ -365,13 +363,22 @@ export class HallwayHunters {
     }
 
     initializeEntityAnimations() {
-        ["spear"].forEach(spell => {
+        let directionalSpells = [
+            ["spear", 2],
+            ["axe", 4],
+        ];
+        directionalSpells.forEach(data => {
+            let spell = data[0];
+            let nFrames = data[1];
             let directionLists = [];
             ["0", "90", "180", "270"].forEach(d => {
-                directionLists.push([
-                    this.tileSet.tiles[`${spell}_${d}_0`],
-                    this.tileSet.tiles[`${spell}_${d}_1`],
-                ])
+                let frames = [];
+                for (let i = 0; i < nFrames; i++) {
+                    frames.push(
+                        this.tileSet.tiles[`${spell}_${d}_${i}`]
+                    )
+                }
+                directionLists.push(frames);
             });
 
             this.entitySprites[spell] = new DirectionalAnimatedSpriteTile(
@@ -381,5 +388,24 @@ export class HallwayHunters {
                 directionLists[3]
             );
         });
+
+        let sprites = [
+            this.tileSet.tiles["heal_0"],
+            this.tileSet.tiles["heal_1"],
+            this.tileSet.tiles["heal_2"],
+            this.tileSet.tiles["heal_3"],
+            this.tileSet.tiles["heal_4"],
+            this.tileSet.tiles["heal_4"],
+            this.tileSet.tiles["heal_4"],
+            this.tileSet.tiles["heal_4"],
+        ];
+        this.entitySprites["heal"] = new AnimatedSpriteTile(
+            sprites, {
+                zooms: [
+                    1, 1, 1, 1, 1, 2, 3, 4
+                ],
+                loop: false,
+            }
+        );
     }
 }

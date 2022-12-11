@@ -2,7 +2,7 @@ import discord
 
 from discord.ext import commands
 
-from musicplayer.music import YTDLSource
+from src.musicplayer.music import YTDLSource
 
 uwu_count = 0
 

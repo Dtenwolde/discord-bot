@@ -3,7 +3,7 @@ import random
 from typing import Optional, List
 
 from src.web_server.lib.hallway.Items import Item, CollectorItem
-from src.web_server.lib.hallway.Tiles import GroundTile, ChestTile
+from src.web_server.lib.hallway.tiles import GroundTile, ChestTile
 from src.web_server.lib.hallway.Utils import Point, EntityDirections, line_of_sight_endpoints, \
     point_interpolator
 from src.web_server.lib.hallway.exceptions import InvalidAction
@@ -33,7 +33,7 @@ class PlayerClass(MovableEntity):
     MAX_HAND_SIZE = 8
 
     def __init__(self, username: str, socket_id, game):
-        super().__init__(username, game)
+        super().__init__(game, username)
         self.MAX_MOVEMENT = 10
         self.color = ""
         self.username = username
@@ -63,7 +63,7 @@ class PlayerClass(MovableEntity):
 
         self.visible_tiles = []
 
-        from web_server.lib.hallway.HallwayHunters import HallwayHunters
+        from src.web_server.lib.hallway.HallwayHunters import HallwayHunters
         self.game: HallwayHunters = game
 
         self.socket = socket_id
@@ -160,11 +160,6 @@ class PlayerClass(MovableEntity):
             if self.hp <= 0:
                 self.die()
 
-        if isinstance(other, SpellEntity):
-            other: SpellEntity
-            if other.card.damage_type == "heal":
-                self.hp += other.card.damage
-            self.hp = max(self.hp, self.max_hp)
 
     def prepare_action(self, action, extra=None):
         # We cannot do new actions while processing the queued actions
@@ -315,6 +310,8 @@ class PlayerClass(MovableEntity):
             self.mana -= spell.mana_cost
             self.game.entities.append(SpellEntity(self, spell, f"{self.color}_{self.queued_spell}", self.game))
 
+            self.queued_spell = None
+
         # Only draw new card when less than 8 are in hand.
         if len(self.hand) != self.MAX_HAND_SIZE:
             self.hand.append(self.cards.pop())
@@ -358,5 +355,6 @@ class Wizard(PlayerClass):
         super().__init__(username, socket_id, game)
 
         self.class_deck = []
-        # self.class_deck.extend([available_cards["fireball"]] * 10)
-        self.class_deck.extend([available_cards["spear"]] * 20)
+        self.class_deck.extend([available_cards["heal"]] * 10)
+        self.class_deck.extend([available_cards["axe"]] * 10)
+        self.class_deck.extend([available_cards["spear"]] * 10)

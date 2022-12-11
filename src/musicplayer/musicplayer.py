@@ -12,7 +12,7 @@ from discord.ext.commands import Context
 
 from src.database import mongodb as db
 
-from custom_emoji import CustomEmoji
+from src.custom_emoji import CustomEmoji
 from src.database.repository import profile_repository
 from src.database.repository.music_repository import remove_from_owner
 from src.database.models.models import Song, PlaylistSong

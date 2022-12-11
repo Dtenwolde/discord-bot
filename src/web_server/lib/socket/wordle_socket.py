@@ -1,16 +1,11 @@
-import logging
-from functools import wraps
-from time import time
 from typing import Dict
 
-import socketio
 from flask import request
 from flask_socketio import join_room
 
-from database.repository import room_repository
 from src.web_server import session_user, sio, timing
-from web_server.lib.user_session import session_user_set
-from web_server.lib.wordle.WordleTable import WordlePhases, WordleTable, WordlePlayer
+from src.web_server.lib.user_session import session_user_set
+from src.web_server.lib.wordle.WordleTable import WordleTable, WordlePlayer
 
 tables: Dict[int, WordleTable] = {}
 
@@ -32,7 +27,6 @@ def disconnect():
         del tables[remove_id]
 
 
-@sio.on("ping", namespace="/wordle")
 def on_ping():
     sio.emit("pong", room=request.sid, namespace="/wordle")
 

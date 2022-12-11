@@ -3,7 +3,7 @@ from typing import Dict
 from flask import request
 from flask_socketio import join_room
 
-from database.repository import room_repository
+from src.database.repository import room_repository
 from src.web_server import sio
 from src.web_server.lib.poker.exceptions import PokerException
 from src.web_server.lib.poker.PokerTable import PokerTable, Phases

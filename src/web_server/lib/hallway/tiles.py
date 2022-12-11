@@ -196,6 +196,42 @@ class InnerBottomRightCornerWall2(WallTile):
         self.image = "inner_corner_br_top"
 
 
+class TotemTopLeft(WallTile):
+    def __init__(self):
+        super().__init__()
+        self.image = "totem_top_left"
+
+
+class TotemTopRight(WallTile):
+    def __init__(self):
+        super().__init__()
+        self.image = "totem_top_right"
+
+
+class TotemMidLeft(WallTile):
+    def __init__(self):
+        super().__init__()
+        self.image = "totem_mid_left"
+
+
+class TotemMidRight(WallTile):
+    def __init__(self):
+        super().__init__()
+        self.image = "totem_mid_right"
+
+
+class TotemBotLeft(WallTile):
+    def __init__(self):
+        super().__init__()
+        self.image = "totem_bot_left"
+
+
+class TotemBotRight(WallTile):
+    def __init__(self):
+        super().__init__()
+        self.image = "totem_bot_right"
+
+
 class TopWall(WallTile):
     def __init__(self):
         super().__init__()

@@ -4,7 +4,7 @@ import discord
 from discord import User, Message, Reaction
 from discord.ext import commands
 from discord.ext.commands import Context
-from custom_emoji import CustomEmoji
+from src.custom_emoji import CustomEmoji
 from src.database import mongodb as db
 from src.database.models.models import RoomModel
 from src.database.repository import room_repository, profile_repository
