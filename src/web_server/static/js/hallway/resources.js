@@ -106,13 +106,20 @@ export class TileSet {
         this.tiles["floor"] = context.getImageData(6 * S, 2 * S, S, S);
         this.tiles["wall_test"] = context.getImageData(6 * S, S, S, S);
 
-        this.tiles["door"] = context.getImageData(7 * S, 7 * S, S, S);
         this.tiles["ladder"] = context.getImageData(15 * S, 8 * S, S, S);
         this.tiles["camera"] = context.getImageData(7 * S, 6 * S, S, S);
 
         this.tiles["UI_corner_bl"] = context.getImageData(19 * S, 11 * S, S, S);
         this.tiles["UI_edge_left"] = context.getImageData(20 * S, 11 * S, S, S);
         this.tiles["UI_edge_bottom"] = context.getImageData(21 * S, 11 * S, S, S);
+
+        this.tiles["thin_wall_v"] = context.getImageData(17 * S, 16 * S, S, S);
+        this.tiles["thin_wall_h"] = context.getImageData(17 * S, 17 * S, S, S);
+        ["v", "h"].forEach((o, y) => {
+            for (let i = 0; i < 4; i++) {
+                this.tiles[`door_${o}_${i}`] = context.getImageData((13 + i) * S, (16 + y) * S, S, S);
+            }
+        });
 
         COLORS.map((color, row) => {
             for (let i = 0; i < 3; i++) {

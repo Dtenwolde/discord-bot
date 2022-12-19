@@ -1,26 +1,16 @@
-import uuid
+from abc import abstractmethod
 
-from src.web_server.lib.hallway.Utils import Point, EntityDirections, direction_to_point
+from src.web_server.lib.hallway.Utils import EntityDirections, direction_to_point
+from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.exceptions import InvalidAction
 
 
-class MovableEntity:
+class MovableEntity(Entity):
     MAX_MOVEMENT = 10
 
     def __init__(self, game, unique_identifier=None):
-        if unique_identifier is None:
-            unique_identifier = str(uuid.uuid4())
-        self.uid = unique_identifier
-        self.position = Point(1, 1)
-        self.sprite_name = None
-
-        self.last_position = self.position
-        self.class_name = None
-
+        super().__init__(game, unique_identifier)
         self.can_move = True
-
-        self.updated = True
-        self.alive = True
 
         self.movement_cooldown = 2  # Ticks
         self.movement_timer = 0
@@ -29,15 +19,11 @@ class MovableEntity:
 
         self.direction = EntityDirections.DOWN
 
-        from src.web_server.lib.hallway.hallway_hunters import HallwayHunters
-        self.game: HallwayHunters = game
-
     def start(self):
         self.movement_timer = 0
 
     def tick(self):
         self.movement_timer = max(0, self.movement_timer - 1)
-        # self.last_position = self.position
 
     def change_position(self, point):
         self.position = point
@@ -49,11 +35,11 @@ class MovableEntity:
         :return:
         """
         if not self.can_move:
-            return
+            raise InvalidAction("You cannot move.")
 
         if len(self.movement_queue) == 0:
             self.moving = False
-            return
+            raise InvalidAction("There are no moves left in the queue for you.")
 
         move = self.movement_queue.pop(0)
 
@@ -81,18 +67,30 @@ class MovableEntity:
 
         # Reset the movement timer
         self.movement_timer = self.movement_cooldown
-        self.position = new_position
+        from src.web_server.lib.hallway.entities.player_class import PlayerClass
 
-        for entity in self.game.get_entities_at(self.position):
-            if entity != self:
-                self.collide(entity)
-                entity.collide(self)
+        can_move_through = True
+        for entity in self.game.get_entities_at(new_position):
+            if entity is self:
+                continue
 
-        self.moving = True
-        return move
+            can_move_through &= self.collide(entity)
 
-    def collide(self, other):
-        pass
+            if isinstance(self, PlayerClass):
+                print(can_move_through, entity, entity.can_move_through)
+
+            entity.collide(self)
+
+        if isinstance(self, PlayerClass):
+            print(can_move_through, new_position)
+        if can_move_through:
+
+            self.position = new_position
+            self.moving = True
+
+            return move
+
+        raise InvalidAction("An entity is preventing you from moving to this tile.")
 
     def get_interpolated_position(self):
         if self.direction is None:
@@ -104,20 +102,22 @@ class MovableEntity:
         return position
 
     def to_json(self):
-        state = {
-            "uid": self.uid,
+        state = super().to_json()
+        state.update({
             "position": self.get_interpolated_position().to_json(),
             "direction": self.direction.value if self.direction is not None else None,
             "moving": self.moving,
-        }
+        })
         return state
 
     def die(self):
         self.alive = False
         self.game.entities.remove(self)
 
+    @abstractmethod
     def post_movement_action(self):
         pass
 
+    @abstractmethod
     def prepare_movement(self):
         pass

@@ -4,8 +4,60 @@ import time
 from typing import List, Tuple
 
 from src.web_server.lib.hallway.Items import RubbishItem, CollectorItem
+from src.web_server.lib.hallway.entities.entity import Entity
+from src.web_server.lib.hallway.entities.neutral.Door import Door
 from src.web_server.lib.hallway.tiles import *
 from src.web_server.lib.hallway.Utils import Point
+
+
+def get_surrounding_points(point: Point):
+    return [
+        Point(point.x + 1, point.y),
+        Point(point.x - 1, point.y),
+        Point(point.x, point.y + 1),
+        Point(point.x, point.y - 1)
+    ]
+
+
+def flood_fill(base: List[List[Tile]], player_spawn_location: Point):
+    frontier = [player_spawn_location]
+
+    points = []
+    while len(frontier) != 0:
+        current = frontier.pop()
+        points.append(current)
+
+        neighbours = get_surrounding_points(current)
+        for neighbour in neighbours:
+            if neighbour in points:
+                continue
+
+            # If this is a door placeholder, we add it to the list of points.
+            # While we cannot search through the door, we add it to be able to search in it more easily
+            if isinstance(base[neighbour.x][neighbour.y], DoorPlaceholder):
+                points.append(neighbour)
+            elif base[neighbour.x][neighbour.y].movement_allowed:
+                frontier.append(neighbour)
+
+
+
+    return points
+
+
+class DoorPlaceholder(Tile):
+    """
+    We use this placeholder to be able to flood-fill from the users on this grid, as doors are entities otherwise.
+    """
+
+    def __init__(self, orientation):
+        super().__init__()
+        self.image = "void"
+        self.movement_allowed = True
+        self.opaque = True
+        self.orientation = orientation
+
+    def __repr__(self):
+        return "X"
 
 
 class Generator:
@@ -13,6 +65,8 @@ class Generator:
         self.generator_size = generator_size
         self.base: List[List[Tile]] = [[UnknownTile() for _ in range(generator_size)] for _ in range(generator_size)]
         self.room_centers: List[Point] = []
+        self.doors: List[Door] = []
+        self.entities: List[Entity] = []
 
     def room_generator(self, size, attempts=50):
         def room_fits(_x, _y, _width, _height):
@@ -31,7 +85,7 @@ class Generator:
             """
             for i in range(_x, _x + _width):
                 for j in range(_y, _y + _height):
-                    self.base[i][j] = GroundTile()
+                    self.base[i][j] = FloorTile()
             return True
 
         min_size = 3
@@ -55,16 +109,16 @@ class Generator:
         def check_point(_point, _orig_point):
             # If the left point is not the original point, and it is already ground, it is not valid
             lp = Point(_point.x - 1, _point.y)
-            if lp != _orig_point and isinstance(self.base[_point.x - 1][_point.y], GroundTile):
+            if lp != _orig_point and isinstance(self.base[_point.x - 1][_point.y], FloorTile):
                 return False
             rp = Point(_point.x + 1, _point.y)
-            if rp != _orig_point and isinstance(self.base[_point.x + 1][_point.y], GroundTile):
+            if rp != _orig_point and isinstance(self.base[_point.x + 1][_point.y], FloorTile):
                 return False
             tp = Point(_point.x, _point.y - 1)
-            if tp != _orig_point and isinstance(self.base[_point.x][_point.y - 1], GroundTile):
+            if tp != _orig_point and isinstance(self.base[_point.x][_point.y - 1], FloorTile):
                 return False
             bp = Point(_point.x, _point.y + 1)
-            if bp != _orig_point and isinstance(self.base[_point.x][_point.y + 1], GroundTile):
+            if bp != _orig_point and isinstance(self.base[_point.x][_point.y + 1], FloorTile):
                 return False
             return True
 
@@ -79,7 +133,7 @@ class Generator:
         while len(wall_cells) > 0:
             # Pop an uncarved cell and set it to ground, then branch from this position onward
             carved_cells = [wall_cells.pop()]
-            self.base[carved_cells[0].x][carved_cells[0].y] = GroundTile()
+            self.base[carved_cells[0].x][carved_cells[0].y] = FloorTile()
             while len(carved_cells) > 0:
                 current_cell = carved_cells[random.randint(0, len(carved_cells) - 1)]
                 potential_cells = []
@@ -98,8 +152,8 @@ class Generator:
                     next_cell = potential_cells[random.randint(0, len(potential_cells) - 1)]
                     # Remove this cell from all available wall cells
                     wall_cells.remove(next_cell)
-                    self.base[next_cell.x][next_cell.y] = GroundTile()
-                    self.base[(next_cell.x + current_cell.x) // 2][(next_cell.y + current_cell.y) // 2] = GroundTile()
+                    self.base[next_cell.x][next_cell.y] = FloorTile()
+                    self.base[(next_cell.x + current_cell.x) // 2][(next_cell.y + current_cell.y) // 2] = FloorTile()
                     carved_cells.append(next_cell)
                 else:
                     carved_cells.remove(current_cell)
@@ -156,16 +210,16 @@ class Generator:
                 if i == 0:
                     tails.append(random_door)
                 if Point(random_door.x - 2, random_door.y) in region:
-                    self.base[random_door.x - 1][random_door.y] = DoorTile()
+                    self.base[random_door.x - 1][random_door.y] = DoorPlaceholder("vertical")
                     continue
                 if Point(random_door.x + 2, random_door.y) in region:
-                    self.base[random_door.x + 1][random_door.y] = DoorTile()
+                    self.base[random_door.x + 1][random_door.y] = DoorPlaceholder("vertical")
                     continue
                 if Point(random_door.x, random_door.y + 2) in region:
-                    self.base[random_door.x][random_door.y + 1] = DoorTile()
+                    self.base[random_door.x][random_door.y + 1] = DoorPlaceholder("horizontal")
                     continue
                 if Point(random_door.x, random_door.y - 2) in region:
-                    self.base[random_door.x][random_door.y - 1] = DoorTile()
+                    self.base[random_door.x][random_door.y - 1] = DoorPlaceholder("horizontal")
                     continue
 
     def remove_dead_ends(self):
@@ -230,6 +284,8 @@ class Generator:
                     up = upscaled_board[x][y - 1].movement_allowed
                     left = upscaled_board[x - 1][y].movement_allowed
                     right = upscaled_board[x + 1][y].movement_allowed
+
+                    # Add the correct corner and edge tiles
                     if down:
                         if left:
                             upscaled_board[x][y] = BottomLeftCornerWall()
@@ -284,6 +340,26 @@ class Generator:
                             upscaled_board[x][y] = InnerTopRightCornerWall()
                             upscaled_board[x][y - 1] = InnerTopRightCornerWall2()
 
+        # Add the correct door tiles
+        for x in range(1, size * scale, scale):
+            for y in range(1, size * scale, scale):
+                if isinstance(upscaled_board[x][y], DoorPlaceholder):
+                    if upscaled_board[x][y].orientation == "vertical":
+                        for y_repl in range(3):
+                            upscaled_board[x - 1][y - 1 + y_repl] = FloorTile()
+                            upscaled_board[x + 1][y - 1 + y_repl] = FloorTile()
+                        upscaled_board[x][y - 1] = ThinWallTileVertical()
+                        upscaled_board[x][y + 1] = ThinWallTileVertical()
+                    else:
+                        for x_repl in range(3):
+                            upscaled_board[x - 1 + x_repl][y - 1] = FloorTile()
+                            upscaled_board[x - 1 + x_repl][y + 1] = FloorTile()
+                        upscaled_board[x - 1][y] = ThinWallTileHorizontal()
+                        upscaled_board[x + 1][y] = ThinWallTileHorizontal()
+                    door = Door(None)
+                    door.position = Point(x, y)
+                    self.doors.append(door)
+
         self.base = upscaled_board
         self.room_centers = [center * scale for center in self.room_centers]
 
@@ -292,10 +368,42 @@ class Generator:
 
         for x in range(0, size):
             for y in range(0, size):
-                if isinstance(self.base[x][y], GroundTile):
+                if isinstance(self.base[x][y], FloorTile):
                     chance = random.randint(0, 30)
                     if chance == 0:
                         self.base[x][y].item = RubbishItem()
+
+    def generate_keys(self, player_spawn_location: Point):
+        n_prev_valid_locations = -1
+        valid_locations = []
+
+        print(len(self.doors))
+        # Keep looping until we find no more new tiles
+        while len(valid_locations) != n_prev_valid_locations:
+            n_prev_valid_locations = len(valid_locations)
+            valid_locations = flood_fill(self.base, player_spawn_location)
+
+            for door in self.doors:
+                if door.key_gotten:
+                    continue
+                if door.position in valid_locations:
+                    # Get the key for this door, place it in a reachable location
+                    key = door.get_key()
+                    key.position = random.choice(valid_locations)
+                    self.entities.append(key)
+                    print("Generated a key for door at", key.position)
+
+                    # Remove the blocked door so we can continue the floodfill
+                    self.base[door.position.x][door.position.y] = FloorTile()
+
+
+        return self.entities + self.doors
+
+    def print(self):
+        for row in self.base:
+            for tile in row:
+                print(tile, end="")
+            print("\n")
 
     def generate_board(self, size, room) -> Tuple[List[List[Tile]], List[Point]]:
         scale = 3

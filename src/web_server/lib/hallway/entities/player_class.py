@@ -3,14 +3,14 @@ import random
 from typing import Optional, List
 
 from src.web_server.lib.hallway.Items import Item, CollectorItem
-from src.web_server.lib.hallway.tiles import GroundTile, ChestTile
+from src.web_server.lib.hallway.tiles import FloorTile, ChestTile
 from src.web_server.lib.hallway.Utils import Point, EntityDirections, line_of_sight_endpoints, \
     point_interpolator
 from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.cards.Card import available_cards, Card
 from src.web_server.lib.hallway.entities.Spell import SpellEntity
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
-from src.web_server.lib.hallway.entities.Enemies import EnemyClass
+from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass
 from src.web_server.lib.hallway.entities.Passive import Passive
 
 DEMOLISHER_COOLDOWN = 30  # Seconds
@@ -30,12 +30,14 @@ class PlayerState:
 
 class PlayerClass(MovableEntity):
     STARTING_HAND_SIZE = 4
+
     MAX_HAND_SIZE = 8
 
     def __init__(self, username: str, socket_id, game):
         super().__init__(game, username)
         self.MAX_MOVEMENT = 10
         self.color = ""
+        self.sprite_name = f"{self.color}_0_0"
         self.username = username
         self.spawn_position = Point(1, 1)
         self.position = Point(1, 1)
@@ -83,6 +85,12 @@ class PlayerClass(MovableEntity):
         self.hand: List[Card] = []
         self.queued_spell = None
 
+        # Inventory
+        self.inventory = []
+
+    def prepare_movement(self):
+        pass
+
     def start(self):
         super().start()
 
@@ -127,18 +135,6 @@ class PlayerClass(MovableEntity):
 
         new_position = self.position + attempted_move
         tile = self.game.board[new_position.x][new_position.y]
-        # TODO: Synchronize animations server side maybe
-        if isinstance(tile, ChestTile) \
-                and tile.player == self \
-                and self.item is not None:
-            self.stored_items.append(self.item)
-            self.item = None
-            self.generate_item()
-
-            # Animate the chest opening and closing
-            tile.animation_ticks = 20
-            tile.finish_animation = True
-            self.game.animations.add(tile)
 
         if not tile.movement_allowed:
             raise InvalidAction("You cannot move on this tile.")
@@ -160,6 +156,7 @@ class PlayerClass(MovableEntity):
             if self.hp <= 0:
                 self.die()
 
+        return other.can_move_through
 
     def prepare_action(self, action, extra=None):
         # We cannot do new actions while processing the queued actions
@@ -277,7 +274,7 @@ class PlayerClass(MovableEntity):
     def generate_item(self):
         random_x = random.randint(0, len(self.game.board[0]) - 1)
         random_y = random.randint(0, len(self.game.board) - 1)
-        while not isinstance(self.game.board[random_x][random_y], GroundTile):
+        while not isinstance(self.game.board[random_x][random_y], FloorTile):
             random_x = random.randint(0, len(self.game.board[0]) - 1)
             random_y = random.randint(0, len(self.game.board) - 1)
 

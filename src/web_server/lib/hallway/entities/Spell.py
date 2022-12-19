@@ -1,5 +1,6 @@
 from src.web_server.lib.hallway.Utils import direction_to_point, Point
 from src.web_server.lib.hallway.cards.Card import Card
+from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 
 
@@ -12,8 +13,16 @@ class SpellEntity(MovableEntity):
         self.card = card
         self.movement_queue = [direction_to_point(player.direction)] * card.ability_range
 
+        self.sprite_name = self.card.name
+
         waiting_ticks = max(0, card.animation_length - len(self.movement_queue))
         self.movement_queue.extend([Point(0, 0)] * waiting_ticks)
+
+    def prepare_movement(self):
+        pass
+
+    def collide(self, other: Entity) -> bool:
+        return True
 
     def movement_action(self):
         move = super().movement_action()
@@ -29,10 +38,3 @@ class SpellEntity(MovableEntity):
                     player.hp = min(player.max_hp, player.hp + self.card.damage)
 
         self.die()
-
-    def to_json(self):
-        state = super().to_json()
-        state.update({
-            "sprite_name": self.card.name
-        })
-        return state

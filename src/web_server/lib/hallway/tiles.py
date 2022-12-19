@@ -11,7 +11,7 @@ class Tile:
 
     def __init__(self):
         self.image = "center"
-        self.movement_allowed = True
+        self.movement_allowed = False
         self.opaque = True
         self.animation_ticks = 0
         self.finish_animation = False
@@ -33,7 +33,7 @@ class Tile:
     __repr__ = __str__
 
 
-class GroundTile(Tile):
+class FloorTile(Tile):
     def __init__(self):
         super().__init__()
         self.image = "floor"
@@ -79,16 +79,28 @@ class WallTile(Tile):
         return "W"
 
 
-class DoorTile(Tile):
+class ThinWallTileVertical(Tile):
     def __init__(self):
         super().__init__()
-        self.image = "door"
+        self.image = "thin_wall_v"
 
-        self.movement_allowed = True
+        self.movement_allowed = False
         self.opaque = True
 
     def __repr__(self):
-        return "D"
+        return "|"
+
+
+class ThinWallTileHorizontal(Tile):
+    def __init__(self):
+        super().__init__()
+        self.image = "thin_wall_h"
+
+        self.movement_allowed = False
+        self.opaque = True
+
+    def __repr__(self):
+        return "-"
 
 
 class TopLeftCornerWall(WallTile):

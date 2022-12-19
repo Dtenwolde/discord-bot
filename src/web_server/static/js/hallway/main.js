@@ -61,9 +61,9 @@ function loadMainContent(gameWrapper) {
 
 // Game rendering stuff
 let then = 0;
-
+let rendering = true;
 function gameLoop() {
-    requestAnimationFrame(gameLoop);
+    if (rendering) requestAnimationFrame(gameLoop);
 
     const now = performance.now();
     const elapsed = now - then;
@@ -99,7 +99,12 @@ function gameLoop() {
         game.statsText.frameTime.text = "Frame time: " + round(game.stats.frameTime.get()) + " ms";
 
         // Compute the offset for all tiles, to center rendering on the player.
-        view.render();
+        try {
+          view.render();
+        } catch (e) {
+            console.log(e);
+            rendering = false;
+        }
     }
 }
 

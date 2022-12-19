@@ -1,12 +1,10 @@
 from typing import List
 
-from src.web_server.lib.hallway.Utils import Point, EntityDirections, direction_to_point
+from src.web_server.lib.hallway.Utils import Point, EntityDirections
 from src.web_server.lib.hallway.algorithms import pathfinding
-from src.web_server.lib.hallway.exceptions import InvalidAction
-from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
-from src.web_server.lib.hallway.entities.Spell import SpellEntity
 from src.web_server.lib.hallway.entities.Passive import Passive
-import uuid
+from src.web_server.lib.hallway.entities.Spell import SpellEntity
+from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 
 
 class EnemyClass(MovableEntity):
@@ -48,6 +46,8 @@ class EnemyClass(MovableEntity):
             if self.hp <= 0:
                 self.die()
 
+        return other.can_move_through
+
     def start(self):
         super().start()
         self.direction = EntityDirections.DOWN
@@ -69,7 +69,6 @@ class EnemyClass(MovableEntity):
         state = super().to_json()
         state.update({
             "dead": self.dead,
-            "sprite_name": self.sprite_name,
         })
         return state
 
@@ -82,9 +81,3 @@ class EnemyClass(MovableEntity):
 
         path = pathfinding.astar(self.game.board, self.position, self.game.player_list[0].position)
         self.movement_queue = path[:self.MAX_MOVEMENT]
-
-
-class Slime(EnemyClass):
-    def __init__(self, game):
-        super().__init__("slime", game)
-        self.hp = 2

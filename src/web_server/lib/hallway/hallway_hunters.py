@@ -10,9 +10,10 @@ from src.web_server import sio, timing
 
 from src.web_server.lib.hallway import tiles
 from src.web_server.lib.hallway.Utils import Point
-from src.web_server.lib.hallway.entities.Enemies import EnemyClass, Slime
-from src.web_server.lib.hallway.entities.PlayerClasses import Demolisher, PlayerClass, PlayerState, Wizard
+from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass, Slime
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
+from src.web_server.lib.hallway.entities.player_class import Demolisher, PlayerClass, PlayerState, Wizard
+from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.entities.Spawner import EntitySpawner
 from src.web_server.lib.hallway.generator import Generator
@@ -40,7 +41,7 @@ class HallwayHunters:
         self.room_centers: List[Point] = []
         self.board: List[List[tiles.Tile]] = []
         self.enemies: List[EnemyClass] = []
-        self.entities: List[MovableEntity] = []
+        self.entities: List[Entity] = []
 
         # Generate this to send to every player initially
         self.initial_board_json = [[tiles.UnknownTile().to_json() for _ in range(self.size)] for _ in range(self.size)]
@@ -62,7 +63,6 @@ class HallwayHunters:
 
         points = random.sample(self.room_centers, n)
         self.room_centers = [center for center in self.room_centers if center not in points]
-        print(points)
         for point in points:
             spawner = EntitySpawner(self, Slime)
             spawner.position = point
@@ -87,9 +87,13 @@ class HallwayHunters:
 
         # Generate current floor of the dungeon
         self.board, self.room_centers = self.generator.generate_board(self.size, self.room_id)
-        self.generate_spawners(4)
-
+        self.generate_spawners(0)
         spawn_point = random.choice(self.room_centers)
+
+        # Generate keys and door entities
+        entities = self.generator.generate_keys(spawn_point)
+        self.add_entities(entities)
+
         spawn_point_modifier = [
             Point(0, 0),
             Point(1, 0),
@@ -104,9 +108,6 @@ class HallwayHunters:
             player.change_position(spawn_point + spawn_point_modifier[i])
             player.start()
             sio.emit("game_state", self.export_board(player), room=player.socket, namespace="/hallway")
-
-        self.enemies.append(Slime(self))
-        self.enemies[0].change_position(spawn_point + spawn_point_modifier[-1])
 
         self.turn = 0
 
@@ -152,7 +153,8 @@ class HallwayHunters:
         Process all entities, returns False if nothing else needs to be done.
         :return:
         """
-        for entity in self.entities:
+        movable_entities = [entity for entity in self.entities if isinstance(entity, MovableEntity)]
+        for entity in movable_entities:
             if entity.movement_timer == 0:
                 try:
                     entity.movement_action()
@@ -160,11 +162,11 @@ class HallwayHunters:
                     pass
 
         # Check if everybody has finished their movement
-        for entity in self.entities:
+        for entity in movable_entities:
             if len(entity.movement_queue) != 0 or entity.movement_timer != 0:
                 return True
 
-        for entity in self.entities:
+        for entity in movable_entities:
             entity.post_movement_action()
 
         self.entities = [entity for entity in self.entities if entity.alive]
@@ -182,7 +184,7 @@ class HallwayHunters:
             if player.movement_timer == 0:
                 try:
                     player.movement_action()
-                except:
+                except InvalidAction:
                     pass
 
         # Check if everybody has finished their movement
@@ -297,6 +299,7 @@ class HallwayHunters:
                 for entity in self.entities:
                     if entity.position == tile:
                         visible_entities.append(entity)
+
             data.update({
                 "visible_enemies": [enemy.to_json() for enemy in visible_enemies],
                 "visible_entities": [entity.to_json() for entity in visible_entities]
@@ -393,3 +396,8 @@ class HallwayHunters:
         all_entities.extend([x for x in self.entities if x.position == position])
         all_entities.extend([x for x in self.enemies if x.position == position])
         return all_entities
+
+    def add_entities(self, entities):
+        for entity in entities:
+            entity.game = self
+        self.entities.extend(entities)
