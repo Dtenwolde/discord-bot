@@ -87,6 +87,11 @@ export class HallwayHunters {
             this.initializeBoard(data.board_size);
         }
 
+        data.removed_entity_ids.forEach(entityId => {
+            this.entities[entityId].renderable = false;
+            delete this.entities[entityId];
+        });
+
         if (data.visible_tiles !== undefined) {
             this.updateBoardSprites(data.visible_tiles);
             this.updateItems(data.visible_tiles);
@@ -108,10 +113,6 @@ export class HallwayHunters {
         // Fix renderable players like this.
         for (const player of Object.values(this.players)) {
             player.renderable = false;
-        }
-        // Unrender entities that are not visible
-        for (const entity of Object.values(this.entities)) {
-            entity.renderable = false;
         }
 
         // Update player objects

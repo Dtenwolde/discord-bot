@@ -28,6 +28,7 @@ class Phases(Enum):
 
 class HallwayHunters:
     def __init__(self, room_id, username):
+        self.removed_entity_ids: List[str] = []
         self.tick_rate = 60
         self.room_id = room_id
         self.author = username
@@ -272,7 +273,9 @@ class HallwayHunters:
             "started": self.phase == Phases.STARTED,
             "player_data": player.personal_data_json(),
             "all_players": [player.to_json() for player in self.player_list],
+            "removed_entity_ids": [i for i in self.removed_entity_ids]
         }
+        self.removed_entity_ids.clear()
 
         # If this players line of sight changed, send new data.
         if self.updated_line_of_sight:
@@ -401,3 +404,7 @@ class HallwayHunters:
         for entity in entities:
             entity.game = self
         self.entities.extend(entities)
+
+    def remove_entity(self, entity):
+        self.entities.remove(entity)
+        self.removed_entity_ids.append(entity.uid)

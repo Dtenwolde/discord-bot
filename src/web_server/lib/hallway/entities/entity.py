@@ -85,4 +85,4 @@ class Entity:
         :return:
         """
         self.alive = False
-        self.game.entities.remove(self)
+        self.game.remove_entity(self)
