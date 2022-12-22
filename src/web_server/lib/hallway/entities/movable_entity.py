@@ -75,19 +75,11 @@ class MovableEntity(Entity):
                 continue
 
             can_move_through &= self.collide(entity)
-
-            if isinstance(self, PlayerClass):
-                print(can_move_through, entity, entity.can_move_through)
-
             entity.collide(self)
 
-        if isinstance(self, PlayerClass):
-            print(can_move_through, new_position)
+        self.moving = self.can_move_through
         if can_move_through:
-
             self.position = new_position
-            self.moving = True
-
             return move
 
         raise InvalidAction("An entity is preventing you from moving to this tile.")

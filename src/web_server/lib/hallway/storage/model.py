@@ -1,5 +1,5 @@
 import sqlalchemy
-from sqlalchemy import String, JSON
+from sqlalchemy import String, JSON, Column
 
 from src.web_server.lib.hallway.storage.database import GameBase
 
@@ -7,6 +7,6 @@ from src.web_server.lib.hallway.storage.database import GameBase
 class StoredDeck(GameBase):
     __tablename__ = "deck"
 
-    player_name = String()
-    active_deck = JSON()
-    obtained_cards = JSON()
+    player_name = Column(String, primary_key=True)
+    active_deck = Column(JSON)
+    obtained_cards = Column(JSON)

@@ -48,6 +48,9 @@ def create_app():
     # Import all socket modules
     import src.web_server.lib.socket
 
+    from src.web_server.lib.hallway.storage.database import create_all_models
+    create_all_models()
+
     # disable all loggers from different files
     # logging.getLogger("geventwebsocket.server").setLevel(logging.ERROR)
 

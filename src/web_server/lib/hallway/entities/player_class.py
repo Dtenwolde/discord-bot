@@ -1,22 +1,18 @@
-import copy
 import random
 from typing import Optional, List
 
 from src.web_server.lib.hallway.Items import Item, CollectorItem
-from src.web_server.lib.hallway.tiles import FloorTile, ChestTile
 from src.web_server.lib.hallway.Utils import Point, EntityDirections, line_of_sight_endpoints, \
     point_interpolator
-from src.web_server.lib.hallway.exceptions import InvalidAction
-from src.web_server.lib.hallway.cards.card import available_cards, Card
-from src.web_server.lib.hallway.entities.Spell import SpellEntity
-from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
-from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass
+from src.web_server.lib.hallway.cards.card import available_cards
+from src.web_server.lib.hallway.cards.deck import Deck
 from src.web_server.lib.hallway.entities.Passive import Passive
+from src.web_server.lib.hallway.entities.Spell import SpellEntity
+from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass
+from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
+from src.web_server.lib.hallway.exceptions import InvalidAction
+from src.web_server.lib.hallway.tiles import FloorTile
 
-DEMOLISHER_COOLDOWN = 30  # Seconds
-SPY_COOLDOWN = 30  # Seconds
-SCOUT_COOLDOWN = 30  # Seconds
-MRMOLE_COOLDOWN = 10  # Seconds
 
 SPRINT_COOLDOWN = 10 * 60  # Ticks
 KILL_COOLDOWN = 10 * 60  # Ticks
@@ -26,13 +22,11 @@ class PlayerState:
     READY = 0
     PROCESSING = 1
     NOT_READY = 2
+    PREPARING_GAME = 3
+    READY_FOR_GAME = 4
 
 
 class PlayerClass(MovableEntity):
-    STARTING_HAND_SIZE = 4
-
-    MAX_HAND_SIZE = 8
-
     def __init__(self, username: str, socket_id, game):
         super().__init__(game, username)
         self.MAX_MOVEMENT = 10
@@ -52,7 +46,7 @@ class PlayerClass(MovableEntity):
         self.movement_queue = []
         self.moving = False
 
-        self.action_state = PlayerState.NOT_READY
+        self.action_state = PlayerState.PREPARING_GAME
         self.direction = EntityDirections.DOWN
 
         # The item you are holding
@@ -80,16 +74,25 @@ class PlayerClass(MovableEntity):
         self.mana = 5
 
         # Cards to play
-        self.class_deck = []
-        self.cards = []
-        self.hand: List[Card] = []
-        self.queued_spell = None
+        self.deck = Deck(self)
+        self.deck.emit_deck()
+
+        self.queued_spell_idx = None
 
         # Inventory
         self.inventory = []
 
     def prepare_movement(self):
         pass
+
+    def toggle_ready(self):
+        if len(self.deck.selected_cards) == 0:
+            raise InvalidAction("You cannot start the game without adding cards to your deck first!")
+
+        if self.action_state == PlayerState.PREPARING_GAME:
+            self.action_state = PlayerState.READY_FOR_GAME
+        else:
+            self.action_state = PlayerState.PREPARING_GAME
 
     def start(self):
         super().start()
@@ -98,17 +101,15 @@ class PlayerClass(MovableEntity):
         self.direction = EntityDirections.DOWN
         self.visible_tiles = self.compute_line_of_sight()
         self.generate_item()
-        self.queued_spell = None
+        self.queued_spell_idx = None
 
-        self.cards = copy.deepcopy(self.class_deck)
-        random.shuffle(self.cards)
-        self.hand.extend([self.cards.pop() for _ in range(self.STARTING_HAND_SIZE)])
+        self.deck.start()
 
     def die(self):
         self.passives = []
         self.dead = True
         self.can_move = False
-        self.queued_spell = None
+        self.queued_spell_idx = None
 
         self.drop_item()
         self.movement_queue.clear()
@@ -227,7 +228,7 @@ class PlayerClass(MovableEntity):
         return {
             "passives": [passive.to_json() for passive in self.passives],
             "stored_items": [item.to_json() for item in self.stored_items],
-            "hand": [vars(card) for card in self.hand],
+            "hand": [vars(available_cards[card_name]) for card_name in self.deck.hand],
         }
 
     def convert_class(self, new_class):
@@ -290,28 +291,24 @@ class PlayerClass(MovableEntity):
             self.update_line_of_sight()
 
     def suggest_card(self, n_action):
-        if n_action >= len(self.hand):
+        if n_action >= len(self.deck.hand):
             return
 
-        if self.mana < self.hand[n_action].mana_cost:
+        if self.mana < self.deck.hand[n_action].mana_cost:
             return
 
-        if self.queued_spell == n_action:
-            self.queued_spell = None
+        if self.queued_spell_idx == n_action:
+            self.queued_spell_idx = None
         else:
-            self.queued_spell = n_action
+            self.queued_spell_idx = n_action
 
     def post_movement_action(self):
-        if self.queued_spell is not None:
-            spell = self.hand.pop(self.queued_spell)
+        if self.queued_spell_idx is not None:
+            spell = self.deck.play_card(idx=self.queued_spell_idx)
             self.mana -= spell.mana_cost
-            self.game.entities.append(SpellEntity(self, spell, f"{self.color}_{self.queued_spell}", self.game))
+            self.game.entities.append(SpellEntity(self, spell, f"{self.color}_{self.queued_spell_idx}", self.game))
 
-            self.queued_spell = None
-
-        # Only draw new card when less than 8 are in hand.
-        if len(self.hand) != self.MAX_HAND_SIZE:
-            self.hand.append(self.cards.pop())
+            self.queued_spell_idx = None
 
         self.mana = min(self.mana + self.mana_regen, self.max_mana)
 

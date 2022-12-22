@@ -82,12 +82,6 @@ class HallwayHunters:
             return
         self.phase = Phases.STARTED
 
-        class_pool = PlayerClass.__subclasses__()
-        random.shuffle(class_pool)
-        for i, player in enumerate(self.player_list):
-            new_player = player.convert_class(Wizard)
-            self.set_player(player.username, new_player)
-
         # Generate current floor of the dungeon
         self.board, self.room_centers = self.generator.generate_board(self.size, self.room_id)
         self.generate_spawners(0)
@@ -105,9 +99,6 @@ class HallwayHunters:
             Point(-1, 1)
         ]
         for i, player in enumerate(self.player_list):
-            player.class_name = class_pool[i].__name__
-            print(f"Player {player.username} is {class_pool[i].__name__}")
-
             player.change_position(spawn_point + spawn_point_modifier[i])
             player.start()
             sio.emit("game_state", self.export_board(player), room=player.socket, namespace="/hallway")
@@ -259,7 +250,7 @@ class HallwayHunters:
                 print("Already found player, overwriting socket id")
                 return player
 
-        player = Demolisher(username, socket_id, self)
+        player = PlayerClass(username, socket_id, self)
 
         player.color = self.color_pool.pop()
         if self.phase == Phases.NOT_YET_STARTED and len(self.player_list) < 8:

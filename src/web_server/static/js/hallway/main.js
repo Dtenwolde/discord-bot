@@ -5,11 +5,12 @@ import {
     round,
     SpriteTile,
     ColorTile,
-    Point, ScrollableView,
+    Point, ScrollableView, CircleLoading,
 } from "../engine/engine.js";
 import {getUsername} from "../engine/auth.js";
 import {HallwayHunters} from "./hallway.js";
 import {COLORS, loadImages, TileSet} from "./resources.js";
+import {Card} from "./player.js";
 
 let canvas = document.getElementById("canvas");
 let context = canvas.getContext("2d");
@@ -26,28 +27,35 @@ view.width = canvas.width;
 view.height = canvas.height;
 const loadingView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight);
 const menuView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Main menu view
-const gameView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Game view
-gameView.renderable = false;
-gameView.zoom = 3;
-// The gameView needs a center point to put on the player
-gameView.cameraCenter = new Point(0, 0);
-view.addChild(menuView);
+const gameView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Game view including UI
 view.addChild(gameView);
+view.addChild(menuView);
 view.addChild(loadingView);
-
 loadingView.renderable = true;
+gameView.renderable = false;
 menuView.renderable = false;
 
 /*
  * Scrollable card selecting view for the players deck-building
  */
-const cardView = new ScrollableView(context, menuView.width * 0.8, 0, menuView.width * 0.2, menuView.height);
+const cardView = new ScrollableView(context, menuView.width * 0.8, 200, menuView.width * 0.1, menuView.height);
+const deckView = new ScrollableView(context, menuView.width * 0.9, 200, menuView.width * 0.1, menuView.height);
 menuView.addChild(cardView);
+menuView.addChild(deckView);
 
+
+/*
+ * In-game UI views etc..
+ */
 const statsView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Informative stats view (fps etc)
 const UIView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // UI View in game, docked at the bottom
 const scoreView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // view for scoreboard
+const tileView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Game view
+tileView.zoom = 3;
+// The gameView needs a center point to put on the player
+tileView.cameraCenter = new Point(0, 0);
 
+gameView.addChild(tileView);
 gameView.addChild(UIView);
 gameView.addChild(statsView);
 gameView.addChild(scoreView);
@@ -90,9 +98,9 @@ function gameLoop() {
         canvas.width = Math.round(canvas.clientWidth / 2) * 2;
         canvas.height = Math.round(canvas.clientHeight / 2) * 2;
 
-        if (canvas.width !== gameView.width || canvas.height !== gameView.height) {
-            gameView.width = canvas.width;
-            gameView.height = canvas.height;
+        if (canvas.width !== tileView.width || canvas.height !== tileView.height) {
+            tileView.width = canvas.width;
+            tileView.height = canvas.height;
         }
 
         // Clear the canvas and fill with floor tile color.
@@ -102,10 +110,10 @@ function gameLoop() {
         game.stats.fps.put(gameView.fps);
         game.stats.frameTime.put(gameView.frametime);
 
-        game.statsText.fps.text = round(game.stats.fps.get()) + " fps";
-        game.statsText.stateTime.text = "State update time: " + round(game.stats.stateTime.get()) + " ms";
-        game.statsText.ping.text = "Latency: " + round(game.stats.ping.get()) + " ms";
-        game.statsText.frameTime.text = "Frame time: " + round(game.stats.frameTime.get()) + " ms";
+        game.statsText.fps.setText(round(game.stats.fps.get()) + " fps");
+        game.statsText.stateTime.setText("State update time: " + round(game.stats.stateTime.get()) + " ms");
+        game.statsText.ping.setText("Latency: " + round(game.stats.ping.get()) + " ms");
+        game.statsText.frameTime.setText("Frame time: " + round(game.stats.frameTime.get()) + " ms");
 
         // Compute the offset for all tiles, to center rendering on the player.
         try {
@@ -126,7 +134,7 @@ function initializeMenu() {
     const button = new Button(x - buttonWidth / 2, 600 - buttonHeight / 2, buttonWidth, buttonHeight);
     button.hoverColor = "#5f7791";
     button.color = "#3c5978";
-    button.setOnClick(canvas, () => {
+    button.setOnClick(canvas, menuView, () => {
         socket.emit("start", {
             room: ROOM_ID
         });
@@ -134,7 +142,7 @@ function initializeMenu() {
     button.renderable = true;
 
     const buttonText = new DrawableText(x, 600);
-    buttonText.text = "Start";
+    buttonText.setText("Start");
     buttonText.fontSize = 25;
     buttonText.color = "rgb(207,226,255)";
     buttonText.centered = true;
@@ -163,13 +171,13 @@ function initializeMenu() {
         button.color = "#3c5978";
         const text = new DrawableText(button.x + blockSize / 2, button.y + blockSize / 2);
         text.color = "rgb(207,226,255)";
-        text.text = cls;
+        text.setText(cls);
         text.centered = true;
 
         const infoText = new DrawableText(x, button.y + 100);
         infoText.color = "rgb(207,226,255)";
         infoText.fontSize = 18;
-        infoText.text = info;
+        infoText.setText(info);
         infoText.centered = true;
         infoText.renderable = false;
         button.infoText = infoText;
@@ -180,7 +188,7 @@ function initializeMenu() {
 
 
     classButtons.forEach(clsButton => {
-        clsButton.setOnClick(canvas, () => {
+        clsButton.setOnClick(canvas, menuView, () => {
             classButtons.forEach(button => {
                 button.color = "#3c5978";
                 button.infoText.renderable = false;
@@ -218,14 +226,14 @@ function initializeMenu() {
         button.color = "#3c5978";
         button.text = new DrawableText(button.x + blockSize / 2, button.y + blockSize / 2);
         button.text.color = color;
-        button.text.text = color;
+        button.text.setText(color);
         button.text.fontSize = 15;
         button.text.centered = true;
         button.playerText = new DrawableText(button.x + blockSize + 10, button.y + blockSize / 2);
         button.playerText.fontSize = 20;
         button.playerText.color = "#fff";
         menuView.colorButtons[color] = button;
-        button.setOnClick(canvas, (_) => {
+        button.setOnClick(canvas, menuView,(_) => {
             socket.emit("changeColor", {
                 room_id: ROOM_ID,
                 color: color,
@@ -236,19 +244,82 @@ function initializeMenu() {
 
     menuView.addObjects(background, overlay, buttonText, button, title);
 
-    // cardView.addObjects(scrollBackground)
-    for (let i = 0; i < 20; i++) {
-        let p = 4;
-        let h = 16;
-        let w = 92;
+    /*
+     * Add deckbuilding cardview on the right-hand side of the game
+     */
+    let cardScrollBackground = new ColorTile("rgba(107,54,39,0.53)");
+    cardScrollBackground.x = cardView.x;
+    cardScrollBackground.y = cardView.y;
+    cardScrollBackground.width = cardView.width;
+    cardScrollBackground.height = cardView.height;
+    menuView.addObjects(cardScrollBackground);
+    let deckScrollBackground = new ColorTile("rgba(107,54,39,0.53)");
+    deckScrollBackground.x = deckView.x;
+    deckScrollBackground.y = deckView.y;
+    deckScrollBackground.width = deckView.width;
+    deckScrollBackground.height = deckView.height;
+    menuView.addObjects(deckScrollBackground);
+
+    deckView.setOnScroll(canvas, (e) => {
+        deckView.viewportOffset.y += Math.sign(e.deltaY) * 40;
+    });
+
+    socket.on("deck", (data) => {
+        createDeckButtons(data);
+    });
+}
+
+function createDeckButtons(data) {
+    cardView.deleteLayer(0, canvas);
+    deckView.deleteLayer(0, canvas);
+
+    const p = 4; // Padding
+    const w = cardView.width - (p * 2);
+    const h = w * 0.4;
+
+    data.remaining_cards.map((data, i) => {
+        let count = data[0];
+        let card = data[1];
+        let name = card.name;
+
+
         let cardButton = new Button(p, p + (p + h) * i, w, h);
         cardButton.color = "#694e4e";
-        cardButton.text = new DrawableText(cardButton.x, cardButton.y + h / 2);
-        cardButton.text.text = `test_${i}`;
-        cardButton.text.fontSize = 15;
-        cardView.addObjects(cardButton, cardButton.text);
-    }
-    menuView.addChild(cardView);
+
+        card.name = `${card.name} (${count})`;
+        cardButton.card = new Card(cardButton.x, cardButton.y, w, h);
+        cardButton.card.setAllText(card);
+
+        cardButton.setOnClick(canvas, cardView,(e) => {
+            socket.emit("add_card", {
+                room: ROOM_ID,
+                card_name: name
+            });
+        });
+        cardView.addObjects(cardButton, cardButton.card);
+    });
+    cardView.setOnScroll(canvas, (e) => {
+        cardView.viewportOffset.y += Math.sign(e.deltaY) * 40;
+    });
+
+    data.deck_cards.map((data, i) => {
+        let count = data[0];
+        let card = data[1];
+
+        let deckButton = new Button(p, p + (p + h) * i, w, h);
+        deckButton.color = "#694e4e";
+        deckButton.card = new Card(deckButton.x, deckButton.y, w, h);
+        deckButton.card.cardName.setText(`${card.name} (${count})`);
+        deckButton.card.cardDescription.setText(card.description);
+
+        deckButton.setOnClick(canvas, deckView,(e) => {
+            socket.emit("remove_card", {
+                room: ROOM_ID,
+                card_name: card.name
+            });
+        });
+        deckView.addObjects(deckButton, deckButton.card);
+    });
 }
 
 function initializeLoading() {
@@ -262,42 +333,7 @@ function initializeLoading() {
     overlay.height = background.height;
     background.z = overlay.z = -1;
 
-    class CircleLoading extends Point {
-        constructor(x, y, radius) {
-            super(x, y);
-            this.renderable = true;
-            this.z = 2;
-            this.radius = radius;
-            this.tick = 0;
-            this.chasing = true;
-            this.ticksPerRotation = 180;
-            this.chaseSpeed = 2.4;
-        }
 
-        render(context) {
-            const phi = (2 * Math.PI);
-            this.tick++;
-
-            if (this.tick % (this.ticksPerRotation / this.chaseSpeed) === 0) this.chasing = !this.chasing;
-
-            const a1 = (this.tick % this.ticksPerRotation) / this.ticksPerRotation * phi;
-            const a2 = (a1 + ((this.tick * this.chaseSpeed) % this.ticksPerRotation) / this.ticksPerRotation * phi) % (phi);
-
-            let sAngle, eAngle;
-            if (this.chasing) {
-                sAngle = a1;
-                eAngle = a2;
-            } else {
-                sAngle = a2;
-                eAngle = a1;
-            }
-            context.lineWidth = 15;
-            context.strokeStyle = this.mainColour;
-            context.beginPath();
-            context.arc(this.x, this.y, this.radius, sAngle, eAngle);
-            context.stroke();
-        }
-    }
 
     const circleLoading = new CircleLoading(background.width / 2, background.height / 2, 35);
     loadingView.infoText = new DrawableText(background.width / 2, background.height / 2 + 100);
@@ -309,7 +345,7 @@ function initializeLoading() {
 
 
 function updateScoreboard() {
-    scoreView.clearLayer(0);
+    scoreView.deleteLayer(0, canvas);
     let sorted_score = [];
     Object.values(game.players).forEach(player => {
         sorted_score.push([player, player.score])
@@ -348,7 +384,7 @@ function start() {
         if (game.players.hasOwnProperty(key)) {
             game.players[key].renderable = true;
             game.players[key].z = 3;
-            gameView.addObjects(game.players[key]);
+            tileView.addObjects(game.players[key]);
         }
     }
 
@@ -368,10 +404,11 @@ function start() {
         if (!data.started) {
             // Lobby information
             COLORS.forEach(color => {
-                menuView.colorButtons[color].playerText.text = ""
+                menuView.colorButtons[color].playerText.setText("");
             });
             data.all_players.forEach(player => {
-                menuView.colorButtons[player.color].playerText.text = player.username;
+                menuView.colorButtons[player.color].playerText.setText(player.username);
+                menuView.colorButtons[player.color].playerText.color = player.state === 3 ? "#fff" : "#494";
             });
         } else {
             game.setState(data);
@@ -411,8 +448,13 @@ function initialize() {
     loadImages("/static/images/tiles/dungeon_sheet.png", (x) => tileSet.splitTileset(x)).then(() =>
         loadImages("/static/images/tiles/background.png", setBackground).then(() => {
             start();
+
+            // Emit join event for server to register user
+            socket.emit("join", {
+                "room": ROOM_ID,
+            });
         }));
-    game = new HallwayHunters(gameView, UIView, tileSet, onCardClick);
+    game = new HallwayHunters(tileView, UIView, tileSet, onCardClick);
 
     socket.on("join", (data) => {
         console.log(`${data} joined the room.`);
@@ -438,11 +480,6 @@ function initialize() {
             sendAction(ev.key);
         }
     });
-
-    // Emit join event for server to register user
-    socket.emit("join", {
-        "room": ROOM_ID,
-    });
 }
 
 function sendAction(action) {
@@ -454,7 +491,7 @@ function sendAction(action) {
 }
 
 socket.on("loading", (data) => {
-    loadingView.infoText.text = data;
+    loadingView.infoText.setText(data);
     menuView.renderable = false;
     loadingView.renderable = true;
 });

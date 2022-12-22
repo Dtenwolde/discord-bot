@@ -29,6 +29,9 @@ class Card:
         self.damage_type = damage_type
         self.animation_length = animation_length
 
+    def to_json(self):
+        return self.__dict__
+
 
 # TODO: Move this to a nice initializer
 available_cards = {}

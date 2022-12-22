@@ -29,6 +29,9 @@ def start_game(data):
 
     game = games[room_id]
 
+    player = game.get_player(username=username)
+    player.toggle_ready()
+
     # Only the owner may start the game
     if game.author != username:
         game.update_players()

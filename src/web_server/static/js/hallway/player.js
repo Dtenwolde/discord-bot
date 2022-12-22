@@ -23,19 +23,18 @@ export const CARDBACK_SELECTED_COLOR = "#fcedcb";
 
 export class Card {
     constructor(x, y, w, h) {
+        this.x = x;
+        this.y = y;
+        this.padding = 2;
+        this.width = w;
+        this.height = h;
+        this.renderable = true;
+        this.z = 0;
+
         this.cardBack = new Button(x, y, w, h);
         this.cardBack.color = CARDBACK_COLOR;
         this.cardBack.hoverColor = CARDBACK_HOVER_COLOR;
 
-        this.cardName = new DrawableText(0, 0);
-        this.cardName.text = "Card Text placeholder"
-        this.cardName.centered = true;
-        this.cardName.color = "rgb(70,53,37)"
-
-        this.cardDescription = new DrawableText(0, 0);
-        this.cardDescription.text = "Card description placeholder"
-        this.cardDescription.color = "rgb(143,108,76)"
-        this.cardDescription.centered = true;
 
         // Create info balls at the top
         let ringRadius = 10;
@@ -52,13 +51,28 @@ export class Card {
         this.radius.color = RADIUS_COLOR;
         this.radius.textObject.color = "#000";
 
+        this.cardName = new DrawableText(0, 0);
+        this.cardName.setText("Temporary Name");
+        this.cardName.height = this.height - ringRadius;
+        this.cardName.width = this.width;
+        this.cardName.centered = true;
+        this.cardName.color = "rgb(70,53,37)"
 
-        this.x = x;
-        this.y = y;
-        this.padding = 2;
-        this.width = w;
-        this.height = h;
-        this.renderable = true;
+        this.cardDescription = new DrawableText(0, 0);
+        this.cardDescription.height = this.cardName.height - this.cardName.fontSize;
+        this.cardDescription.width = w;
+        this.cardDescription.setText("Card description placeholder, it will automatically wrap words!");
+        this.cardDescription.color = "rgb(143,108,76)"
+        this.cardDescription.centered = true;
+    }
+
+    setAllText(card) {
+        this.cardName.setText(card.name);
+        this.cardDescription.setText(card.description);
+        this.manaCost.textObject.setText(String(card.mana_cost));
+        this.damage.textObject.setText(String(card.damage));
+        this.range.textObject.setText(String(card.ability_range));
+        this.radius.textObject.setText(String(card.radius));
     }
 
     render(context) {
@@ -170,7 +184,7 @@ export class Player {
             this.item = null;
 
         // Set player name
-        this.name.text = data.username;
+        this.name.setText(data.username);
         // Sprite width / 2
         this.name.x = this.x * this.SIZE + 8;
         this.name.y = this.y * this.SIZE - this.name.fontSize;
@@ -182,9 +196,9 @@ export class Player {
         this.mana.y = this.y * this.SIZE - this.name.fontSize * 2 - this.mana.radius;
 
         this.hp.progress = this.data.hp / this.data.max_hp;
-        this.hp.textObject.text = "" + this.data.hp;
+        this.hp.textObject.setText("" + this.data.hp);
         this.mana.progress = this.data.mana / this.data.max_mana;
-        this.mana.textObject.text = "" + this.data.mana;
+        this.mana.textObject.setText("" + this.data.mana);
 
         this.score = data.stored_items.length;
     }

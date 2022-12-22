@@ -22,4 +22,4 @@ def create_all_models():
 
 # Create db
 GameBase = declarative_base()
-db = Database("database.db")
+db = Database("src/web_server/lib/hallway/storage/database.db")

@@ -185,13 +185,8 @@ export class HallwayHunters {
         });
         this.state.player_data.hand.forEach((card, index) => {
             let cardObject = this.cards[index];
-            cardObject.cardName.text = card.name;
-            cardObject.cardDescription.text = card.description;
-            cardObject.manaCost.textObject.text = String(card.mana_cost);
+            cardObject.setAllText(card);
             cardObject.damage.colour = DAMAGE_COLOR[card.damage_type];
-            cardObject.damage.textObject.text = String(card.damage);
-            cardObject.range.textObject.text = String(card.ability_range);
-            cardObject.radius.textObject.text = String(card.radius);
             cardObject.renderable = true;
             // cardObject.cardName.text = card.name;
         })
@@ -247,7 +242,7 @@ export class HallwayHunters {
         height = Math.min(newRenderbox.y + newRenderbox.height, this.state.board_size);
 
         // TODO: Dont recompute the entire vision lines every new data update
-        this.view.clearLayer(2);
+        this.view.deleteLayer(2, canvas);
         for (let x = newRenderbox.x; x < width; x++) {
             for (let y = newRenderbox.y; y < height; y++) {
                 this.state.board[x][y].renderable = true;
@@ -313,7 +308,7 @@ export class HallwayHunters {
             const h = 144;
             const padding = 4;
             let card = new Card(padding + i * (w + padding), this.view.height - h + padding, w, h);
-            card.cardBack.setOnClick(canvas, (evt) => {
+            card.cardBack.setOnClick(canvas, this.UIView, (evt) => {
                 // Reset color for all cards except for the selected one
                 this.cards.forEach(card => card.cardBack.color = CARDBACK_COLOR);
                 card.cardBack.color = CARDBACK_SELECTED_COLOR;

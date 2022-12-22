@@ -268,18 +268,101 @@ export class ColorTile extends Rectangle {
     }
 }
 
+/**
+ * Uses canvas.measureText to compute and return the width of the given text of given font in pixels.
+ *
+ * @param {String} text The text to be rendered.
+ * @param {String} font The css font descriptor that text is to be rendered with (e.g. "bold 14px verdana").
+ *
+ * @see https://stackoverflow.com/questions/118241/calculate-text-width-with-javascript/21015393#21015393
+ */
+function getTextWidth(text, font) {
+    // re-use canvas object for better performance
+    const canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+    const context = canvas.getContext("2d");
+    context.font = font;
+    const metrics = context.measureText(text);
+    return metrics.width;
+}
+
+export class CircleLoading extends Point {
+    constructor(x, y, radius) {
+        super(x, y);
+        this.renderable = true;
+        this.z = 2;
+        this.radius = radius;
+        this.tick = 0;
+        this.chasing = true;
+        this.ticksPerRotation = 180;
+        this.chaseSpeed = 2.4;
+    }
+
+    render(context) {
+        const phi = (2 * Math.PI);
+        this.tick++;
+
+        if (this.tick % (this.ticksPerRotation / this.chaseSpeed) === 0) this.chasing = !this.chasing;
+
+        const a1 = (this.tick % this.ticksPerRotation) / this.ticksPerRotation * phi;
+        const a2 = (a1 + ((this.tick * this.chaseSpeed) % this.ticksPerRotation) / this.ticksPerRotation * phi) % (phi);
+
+        let sAngle, eAngle;
+        if (this.chasing) {
+            sAngle = a1;
+            eAngle = a2;
+        } else {
+            sAngle = a2;
+            eAngle = a1;
+        }
+        context.lineWidth = 15;
+        context.strokeStyle = this.mainColour;
+        context.beginPath();
+        context.arc(this.x, this.y, this.radius, sAngle, eAngle);
+        context.stroke();
+    }
+}
+
 export class DrawableText extends Point {
     constructor(x, y) {
         super(x, y);
-        this.text = "";
+        this._lines = [];
         this.fontSize = 12;
         this.font = "Arial";
         this.color = "#F00";
         this.borderColor = null;
         this.renderable = true;
         this.centered = false;
-        this.maxWidth = Infinity;
+        this.width = Infinity;  // Default DrawableText has no overflow
+        this.height = Infinity;  // Default DrawableText has no overflow
         this.z = 0;
+    }
+
+    setText(newText) {
+        if (this.width === 0)
+            return;
+
+        const words = newText.split(' ');
+        this._lines = [];
+
+        let currentLine = words[0];
+        let currentLineWidth = getTextWidth(currentLine, `${this.fontSize}px ${this.font}`);
+        let spaceWidth = getTextWidth(" ", `${this.fontSize}px ${this.font}`);
+
+        words.slice(1).forEach(word => {
+            const wordWidth = getTextWidth(word, `${this.fontSize}px ${this.font}`);
+            const width = wordWidth + spaceWidth;
+
+            if (currentLineWidth + width >= this.width) {
+                // This word made the line break, store previous words as line and go next.
+                this._lines.push(currentLine);
+                currentLine = word;
+                currentLineWidth = wordWidth;
+            } else {
+                currentLine += " " + word;
+                currentLineWidth += width;
+            }
+        });
+        this._lines.push(currentLine);
     }
 
     render(context) {
@@ -288,21 +371,16 @@ export class DrawableText extends Point {
         context.strokeStyle = this.borderColor;
         context.lineWidth = 0.2;
 
-        this.text.split("\n").map((text, i) => {
+        this._lines.map((text, i) => {
             let width = context.measureText(text).width;
-            // TODO: Ensure textwidth cannot exceed bounding box.
-            if (width > this.maxWidth) {
-                let n_segments = this.maxWidth / width;
-                for (let i = 0; i < n_segments; i++) {
+            let offset = this.centered ? width / 2.0 : 0;
+            let height = this.fontSize * .33 + this.fontSize * i;
 
-                }
-            } else {
-                let offset = this.centered ? width / 2 : 0;
-                context.fillText(text, this.x - offset, this.y + this.fontSize * .33 + this.fontSize * i);
-                if (this.borderColor !== null) {
-                    context.strokeText(text, this.x - offset, this.y + this.fontSize * .33 + this.fontSize * i);
-                }
+            if (height + this.fontSize * 1.33 > this.height) return;
 
+            context.fillText(text, this.x - offset, this.y + height);
+            if (this.borderColor !== null) {
+                context.strokeText(text, this.x - offset, this.y + this.fontSize * .33 + this.fontSize * i);
             }
         });
     }
@@ -314,35 +392,55 @@ export class Button extends Rectangle {
         this.z = 0;
         this.color = "#555";
         this.hoverColor = "#777";
-        this.hovering = false;
+        this.hovering = undefined;
         this.renderable = true;
-
-        this._onHoverCallbackSet = false;
+        this.onMove = undefined;
+        this.onClick = undefined;
     }
 
-    setOnHover(canvas) {
-        if (!this._onHoverCallbackSet) {
-            this._onHoverCallbackSet = true;
-            canvas.addEventListener("mousemove", (evt) => {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
+    setOnHover(canvas, view) {
+        if (this.onMove !== undefined)
+            return;
 
-                const x = (evt.clientX - rect.left) * scaleX;
-                const y = (evt.clientY - rect.top) * scaleY;
+        this.onMove = (evt) => {
+            const res = view.calculateRenderingOffset()
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
 
-                this.hovering = (x > this.x && x < this.x + this.width && y > this.y && y < this.y + this.height);
-            });
+            const x = (evt.clientX - rect.left) * scaleX - res.xOffset;
+            const y = (evt.clientY - rect.top) * scaleY - res.yOffset;
+            this.hovering = (x > this.x && x < this.x + this.width && y > this.y && y < this.y + this.height);
         }
+
+        canvas.addEventListener("mousemove", this.onMove);
     }
 
-    setOnClick(canvas, callback) {
-        if (!this._onHoverCallbackSet) this.setOnHover(canvas);
-        canvas.addEventListener("click", (evt) => {
+
+    setOnClick(canvas, view, callback) {
+        if (this.onMove === undefined) this.setOnHover(canvas, view);
+
+        this.onClick = (evt) => {
+            // We can be hovering over a button without having moved first
+            if (this.hovering === undefined) {
+                this.onMove(evt);
+            }
+
             if (this.hovering) {
                 callback(evt);
             }
-        });
+        };
+
+        canvas.addEventListener("click", this.onClick);
+    }
+
+    delete(canvas) {
+        if (this.onClick !== undefined) {
+            canvas.removeEventListener("click", this.onClick);
+        }
+        if (this.onMove !== undefined) {
+            canvas.removeEventListener("mousemove", this.onMove)
+        }
     }
 
     render(context) {
@@ -363,6 +461,7 @@ export class View {
         this.width = width;
         this.height = height;
         this.cameraCenter = undefined;
+        this.viewportOffset = undefined;
         this.zoom = 1;
         this.context = context;
         this.objects = {};
@@ -373,19 +472,27 @@ export class View {
         this.fps = 0;
 
         this._lastInvokation = 0;
+        this.parent = undefined;
     }
 
     addChild(child) {
         if (!(child instanceof View))
             throw Error("Must give object instanceof class View.");
 
+        child.parent = this;
         this.children.push(child);
     }
 
-    clearLayer(layer) {
+    deleteLayer(layer, canvas) {
         let l = this.objects[layer];
         if (l === undefined) return;
-        this.objects[layer] = undefined;
+
+        this.objects[layer].forEach(obj => {
+            if (obj instanceof Button)
+                obj.delete(canvas);
+        });
+
+        delete this.objects[layer];
     }
 
     addObjects() {
@@ -405,16 +512,10 @@ export class View {
         }
     }
 
-    render(xOffset, yOffset) {
-        if (!this.renderable) return;
+    calculateRenderingOffset() {
+        let xOffset = 0;
+        let yOffset = 0;
 
-        if (xOffset === undefined)
-            xOffset = 0;
-        if (yOffset === undefined) {
-            yOffset = 0;
-        }
-
-        const start = performance.now();
 
         // cameraCenter works on zoom level, whereas coordinates and width work on view level
         xOffset += this.x;
@@ -429,11 +530,35 @@ export class View {
             const hh = this.height / 2;
             xOffset -= this.cameraCenter.x * this.zoom - hw;
             yOffset -= this.cameraCenter.y * this.zoom - hh;
-            centerMod.x = this.cameraCenter.x - hw;
-            centerMod.y = this.cameraCenter.y - hh;
+            centerMod.x += this.cameraCenter.x - hw;
+            centerMod.y += this.cameraCenter.y - hh;
+        }
+        if (this.viewportOffset !== undefined) {
+            xOffset -= this.viewportOffset.x;
+            yOffset -= this.viewportOffset.y;
+            centerMod.x += this.viewportOffset.x;
+            centerMod.y += this.viewportOffset.y;
         }
 
-        let viewPortBounds = {
+        if (this.parent !== undefined) {
+            const res = this.parent.calculateRenderingOffset();
+            xOffset += res.xOffset;
+            yOffset += res.yOffset;
+        }
+
+        return {xOffset, yOffset, centerMod};
+    }
+
+    render() {
+        if (!this.renderable) return;
+        const start = performance.now();
+
+        const res = this.calculateRenderingOffset();
+        const xOffset = res.xOffset;
+        const yOffset = res.yOffset;
+        const centerMod = res.centerMod;
+
+        let viewportBounds = {
             x1: centerMod.x,
             x2: this.width + centerMod.x,
             y1: centerMod.y,
@@ -450,10 +575,10 @@ export class View {
                 if (!obj.renderable) return;
 
                 // Check if this object is within the viewport
-                if (obj.x + obj.width < viewPortBounds.x1
-                    || obj.x > viewPortBounds.x2
-                    || obj.y + obj.height < viewPortBounds.y1
-                    || obj.y > viewPortBounds.y2
+                if (obj.x + obj.width < viewportBounds.x1
+                    || obj.x > viewportBounds.x2
+                    || obj.y + obj.height < viewportBounds.y1
+                    || obj.y > viewportBounds.y2
                 ) {
                     return;
                 }
@@ -477,21 +602,19 @@ export class ScrollableView extends View {
     constructor(context, x, y, width, height) {
         super(context, x, y, width, height);
 
-        // Something with scroll here
+        this.viewportOffset = new Point(0, 0);
     }
 
     setOnScroll(canvas, callback) {
-        canvas.addEventListener("scroll", (evt) => {
+        canvas.addEventListener("wheel", (evt) => {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
-
             const x = (evt.clientX - rect.left) * scaleX;
             const y = (evt.clientY - rect.top) * scaleY;
+            const mouseOver = (x > this.x && x < this.x + this.width && y > this.y && y < this.y + this.height);
 
-            this.hovering = (x > this.x && x < this.x + this.width && y > this.y && y < this.y + this.height);
-
-            if (this.hovering) {
+            if (mouseOver) {
                 callback(evt);
             }
         });
