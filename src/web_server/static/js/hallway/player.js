@@ -160,6 +160,7 @@ export class Player {
     update(data) {
         this.x = data.position.x;
         this.y = data.position.y;
+
         this.data = {...data};
 
         // If you are the owner, you know this.

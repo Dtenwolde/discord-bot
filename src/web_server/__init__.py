@@ -45,6 +45,7 @@ def create_app():
     Payload.max_decode_packets = 500
     sio = SocketIO(app, async_mode='gevent')
 
+    # Import all socket modules
     import src.web_server.lib.socket
 
     # disable all loggers from different files

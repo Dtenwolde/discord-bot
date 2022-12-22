@@ -7,25 +7,7 @@
     <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 </head>
 <body>
-<nav>
-    <h1>Game room</h1>
-    <div class="nav-bar">
-        {% if session_user() is not none %}
-        <div class="styled-div-text">
-            <div class="custom-text">User: </div>
-            <div class="custom-title">{{ session_user().owner }}</div>
-        </div>
-        {% endif %}
-    </div>
-</nav>
-<div class="content-wrapper">
-    <section class="content">
-        <header>
-            {% block header %}{% endblock %}
-        </header>
-        {% block content %}{% endblock %}
-    </section>
-</div>
+{% block content %}{% endblock %}
 </body>
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>

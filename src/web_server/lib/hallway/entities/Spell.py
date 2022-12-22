@@ -1,5 +1,5 @@
 from src.web_server.lib.hallway.Utils import direction_to_point, Point
-from src.web_server.lib.hallway.cards.Card import Card
+from src.web_server.lib.hallway.cards.card import Card
 from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 

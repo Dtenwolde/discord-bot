@@ -5,7 +5,7 @@ import {
     round,
     SpriteTile,
     ColorTile,
-    Point,
+    Point, ScrollableView,
 } from "../engine/engine.js";
 import {getUsername} from "../engine/auth.js";
 import {HallwayHunters} from "./hallway.js";
@@ -21,14 +21,16 @@ const FPS_INTERVAL = 1000 / 60;
 
 let game;
 
-const view = new View(context); // Main wrapper view
+const view = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Main wrapper view
 view.width = canvas.width;
 view.height = canvas.height;
-const loadingView = new View(context);
-const menuView = new View(context); // Main menu view
-const gameView = new View(context); // Game view
+const loadingView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight);
+const menuView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Main menu view
+const gameView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Game view
 gameView.renderable = false;
 gameView.zoom = 3;
+// The gameView needs a center point to put on the player
+gameView.cameraCenter = new Point(0, 0);
 view.addChild(menuView);
 view.addChild(gameView);
 view.addChild(loadingView);
@@ -36,9 +38,15 @@ view.addChild(loadingView);
 loadingView.renderable = true;
 menuView.renderable = false;
 
-const statsView = new View(context); // Informative stats view (fps etc)
-const UIView = new View(context); // UI View in game, docked at the bottom
-const scoreView = new View(context); // view for scoreboard
+/*
+ * Scrollable card selecting view for the players deck-building
+ */
+const cardView = new ScrollableView(context, menuView.width * 0.8, 0, menuView.width * 0.2, menuView.height);
+menuView.addChild(cardView);
+
+const statsView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Informative stats view (fps etc)
+const UIView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // UI View in game, docked at the bottom
+const scoreView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // view for scoreboard
 
 gameView.addChild(UIView);
 gameView.addChild(statsView);
@@ -62,6 +70,7 @@ function loadMainContent(gameWrapper) {
 // Game rendering stuff
 let then = 0;
 let rendering = true;
+
 function gameLoop() {
     if (rendering) requestAnimationFrame(gameLoop);
 
@@ -100,7 +109,7 @@ function gameLoop() {
 
         // Compute the offset for all tiles, to center rendering on the player.
         try {
-          view.render();
+            view.render();
         } catch (e) {
             console.log(e);
             rendering = false;
@@ -138,6 +147,9 @@ function initializeMenu() {
     title.borderColor = "#131c2c";
     title.centered = true;
 
+    /*
+     * Selectable class buttons for the players
+     */
     let blockSize = 80;
     let classButtons = [];
     PLAYER_CLASSES.map((tuple, i) => {
@@ -166,6 +178,7 @@ function initializeMenu() {
         menuView.addObjects(button, text, infoText);
     });
 
+
     classButtons.forEach(clsButton => {
         clsButton.setOnClick(canvas, () => {
             classButtons.forEach(button => {
@@ -177,9 +190,17 @@ function initializeMenu() {
         });
     });
 
+    /*
+     * Set background image and overlay to grey it out a little
+     */
     let background = new SpriteTile(menuView.background);
-    background.width = menuView.background.width;
-    background.height = menuView.background.height;
+    // Compute grow factor to ensure no empty edges
+    let horizontalGrow = canvas.clientWidth / background.image.width;
+    let verticalGrow = canvas.clientHeight / background.image.height;
+    let factor = Math.max(horizontalGrow, verticalGrow);
+    background.width = background.image.width * factor + 1;
+    background.height = background.image.height * factor + 1;
+
     background.renderable = true;
     let overlay = new ColorTile("#55555555");
     overlay.width = background.width;
@@ -187,6 +208,9 @@ function initializeMenu() {
     overlay.renderable = true;
     background.z = overlay.z = -1;
 
+    /*
+     * Selectable color-buttons for the players to pick their own color
+     */
     menuView.colorButtons = {};
     COLORS.map((color, i) => {
         let button = new Button(50, 200 + i * 100, blockSize, blockSize);
@@ -210,8 +234,21 @@ function initializeMenu() {
         menuView.addObjects(button, button.text, button.playerText);
     });
 
-
     menuView.addObjects(background, overlay, buttonText, button, title);
+
+    // cardView.addObjects(scrollBackground)
+    for (let i = 0; i < 20; i++) {
+        let p = 4;
+        let h = 16;
+        let w = 92;
+        let cardButton = new Button(p, p + (p + h) * i, w, h);
+        cardButton.color = "#694e4e";
+        cardButton.text = new DrawableText(cardButton.x, cardButton.y + h / 2);
+        cardButton.text.text = `test_${i}`;
+        cardButton.text.fontSize = 15;
+        cardView.addObjects(cardButton, cardButton.text);
+    }
+    menuView.addChild(cardView);
 }
 
 function initializeLoading() {

@@ -7,7 +7,7 @@ from src.web_server.lib.hallway.tiles import FloorTile, ChestTile
 from src.web_server.lib.hallway.Utils import Point, EntityDirections, line_of_sight_endpoints, \
     point_interpolator
 from src.web_server.lib.hallway.exceptions import InvalidAction
-from src.web_server.lib.hallway.cards.Card import available_cards, Card
+from src.web_server.lib.hallway.cards.card import available_cards, Card
 from src.web_server.lib.hallway.entities.Spell import SpellEntity
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass

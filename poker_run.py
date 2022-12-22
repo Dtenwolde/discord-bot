@@ -5,7 +5,7 @@ monkey.patch_all()
 from geventwebsocket import WebSocketServer
 
 if __name__ == "__main__":
-    from src.web_server import create_app
+    from src.web_server import create_app, cleanup
 
     app = create_app()
 
@@ -18,5 +18,5 @@ if __name__ == "__main__":
     try:
         http_server.serve_forever(stop_timeout=1)
     except KeyboardInterrupt:
-        app.cleanup()
+        cleanup()
         http_server.stop()

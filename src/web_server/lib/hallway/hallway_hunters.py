@@ -1,10 +1,11 @@
+from __future__ import annotations
 import logging
 import random
 import threading
 import time
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from src.web_server import sio, timing
 
@@ -18,7 +19,8 @@ from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.entities.Spawner import EntitySpawner
 from src.web_server.lib.hallway.generator import Generator
 
-print(f"Imported {__name__}")
+
+games: Dict[int, HallwayHunters] = {}
 
 
 class Phases(Enum):
@@ -92,8 +94,8 @@ class HallwayHunters:
         spawn_point = random.choice(self.room_centers)
 
         # Generate keys and door entities
-        entities = self.generator.generate_keys(spawn_point)
-        self.add_entities(entities)
+        # entities = self.generator.generate_keys(spawn_point)
+        # self.add_entities(entities)
 
         spawn_point_modifier = [
             Point(0, 0),

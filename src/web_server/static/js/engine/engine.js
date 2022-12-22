@@ -352,15 +352,17 @@ export class Button extends Rectangle {
     }
 }
 
+
 /*
  * Main view logic + rendering.
  */
 export class View {
-    constructor(context) {
-        this.cameraCenter = new Point(400, 400);
-
-        this.width = 800;
-        this.height = 800;
+    constructor(context, x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.cameraCenter = undefined;
         this.zoom = 1;
         this.context = context;
         this.objects = {};
@@ -403,15 +405,40 @@ export class View {
         }
     }
 
-    render() {
+    render(xOffset, yOffset) {
         if (!this.renderable) return;
+
+        if (xOffset === undefined)
+            xOffset = 0;
+        if (yOffset === undefined) {
+            yOffset = 0;
+        }
 
         const start = performance.now();
 
-        const hw = this.width / 2;
-        const hh = this.height / 2;
-        const xOffset = -this.cameraCenter.x * this.zoom + hw;
-        const yOffset = -this.cameraCenter.y * this.zoom + hh;
+        // cameraCenter works on zoom level, whereas coordinates and width work on view level
+        xOffset += this.x;
+        yOffset += this.y;
+
+        let centerMod = {
+            x: 0,
+            y: 0
+        }
+        if (this.cameraCenter !== undefined) {
+            const hw = this.width / 2;
+            const hh = this.height / 2;
+            xOffset -= this.cameraCenter.x * this.zoom - hw;
+            yOffset -= this.cameraCenter.y * this.zoom - hh;
+            centerMod.x = this.cameraCenter.x - hw;
+            centerMod.y = this.cameraCenter.y - hh;
+        }
+
+        let viewPortBounds = {
+            x1: centerMod.x,
+            x2: this.width + centerMod.x,
+            y1: centerMod.y,
+            y2: this.height + centerMod.y
+        }
         this.context.setTransform(this.zoom, 0, 0, this.zoom, xOffset, yOffset);
 
         const keys = Object.entries(this.objects);
@@ -419,20 +446,55 @@ export class View {
         keys.forEach(([key]) => {
             const objects = this.objects[key];
             objects.forEach(obj => {
+                // Programmatically turn off renderability
                 if (!obj.renderable) return;
 
+                // Check if this object is within the viewport
+                if (obj.x + obj.width < viewPortBounds.x1
+                    || obj.x > viewPortBounds.x2
+                    || obj.y + obj.height < viewPortBounds.y1
+                    || obj.y > viewPortBounds.y2
+                ) {
+                    return;
+                }
                 obj.render(this.context);
             })
         });
 
         this.context.setTransform(1, 0, 0, 1, 0, 0);
         this.children.forEach(child => {
-            child.render()
+            child.render(this.x, this.y)
         });
         this.frametime = (performance.now() - start);
 
         this.fps = 1000 / (performance.now() - this._lastInvokation);
         this._lastInvokation = performance.now();
+    }
+}
+
+
+export class ScrollableView extends View {
+    constructor(context, x, y, width, height) {
+        super(context, x, y, width, height);
+
+        // Something with scroll here
+    }
+
+    setOnScroll(canvas, callback) {
+        canvas.addEventListener("scroll", (evt) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const x = (evt.clientX - rect.left) * scaleX;
+            const y = (evt.clientY - rect.top) * scaleY;
+
+            this.hovering = (x > this.x && x < this.x + this.width && y > this.y && y < this.y + this.height);
+
+            if (this.hovering) {
+                callback(evt);
+            }
+        });
     }
 }
 
