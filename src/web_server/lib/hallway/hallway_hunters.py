@@ -9,15 +9,15 @@ from typing import List, Optional, Dict
 
 from src.web_server import sio, timing
 
-from src.web_server.lib.hallway import tiles
+from src.web_server.lib.hallway.map import tiles
 from src.web_server.lib.hallway.Utils import Point
 from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass, Slime
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
-from src.web_server.lib.hallway.entities.player_class import Demolisher, PlayerClass, PlayerState, Wizard
+from src.web_server.lib.hallway.entities.player_class import PlayerClass, PlayerState
 from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.entities.Spawner import EntitySpawner
-from src.web_server.lib.hallway.generator import Generator
+from src.web_server.lib.hallway.map.generator import Generator
 
 
 games: Dict[int, HallwayHunters] = {}
@@ -88,8 +88,8 @@ class HallwayHunters:
         spawn_point = random.choice(self.room_centers)
 
         # Generate keys and door entities
-        # entities = self.generator.generate_keys(spawn_point)
-        # self.add_entities(entities)
+        entities = self.generator.generate_keys(spawn_point)
+        self.add_entities(entities)
 
         spawn_point_modifier = [
             Point(0, 0),

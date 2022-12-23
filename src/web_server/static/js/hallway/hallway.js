@@ -242,7 +242,8 @@ export class HallwayHunters {
         height = Math.min(newRenderbox.y + newRenderbox.height, this.state.board_size);
 
         // TODO: Dont recompute the entire vision lines every new data update
-        this.view.deleteLayer(2, canvas);
+        const FOG_Z = 100;
+        this.view.deleteLayer(FOG_Z, canvas);
         for (let x = newRenderbox.x; x < width; x++) {
             for (let y = newRenderbox.y; y < height; y++) {
                 this.state.board[x][y].renderable = true;
@@ -251,7 +252,7 @@ export class HallwayHunters {
                     let tile = new ColorTile("rgba(0,0,0,0.2)");
                     tile.x = x * 16;
                     tile.y = y * 16;
-                    tile.z = 2;
+                    tile.z = FOG_Z;
                     tile.renderable = true;
 
                     this.view.addObjects(tile);

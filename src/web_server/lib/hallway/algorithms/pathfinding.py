@@ -1,8 +1,7 @@
 import heapq
 from typing import Optional, List
 
-from src.web_server import timing
-from src.web_server.lib.hallway import tiles
+from src.web_server.lib.hallway.map import tiles
 from src.web_server.lib.hallway.Utils import Point
 
 

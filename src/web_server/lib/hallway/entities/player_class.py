@@ -11,7 +11,7 @@ from src.web_server.lib.hallway.entities.Spell import SpellEntity
 from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 from src.web_server.lib.hallway.exceptions import InvalidAction
-from src.web_server.lib.hallway.tiles import FloorTile
+from src.web_server.lib.hallway.map.tiles import FloorTile
 
 
 SPRINT_COOLDOWN = 10 * 60  # Ticks

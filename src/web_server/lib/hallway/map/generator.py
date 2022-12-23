@@ -1,12 +1,11 @@
 import copy
 import random
-import time
 from typing import List, Tuple
 
-from src.web_server.lib.hallway.Items import RubbishItem, CollectorItem
+from src.web_server.lib.hallway.Items import RubbishItem
 from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.entities.neutral.Door import Door
-from src.web_server.lib.hallway.tiles import *
+from src.web_server.lib.hallway.map.tiles import *
 from src.web_server.lib.hallway.Utils import Point
 
 
@@ -38,8 +37,6 @@ def flood_fill(base: List[List[Tile]], player_spawn_location: Point):
                 points.append(neighbour)
             elif base[neighbour.x][neighbour.y].movement_allowed:
                 frontier.append(neighbour)
-
-
 
     return points
 
@@ -343,20 +340,32 @@ class Generator:
         # Add the correct door tiles
         for x in range(1, size * scale, scale):
             for y in range(1, size * scale, scale):
-                if isinstance(upscaled_board[x][y], DoorPlaceholder):
-                    if upscaled_board[x][y].orientation == "vertical":
+                tile = upscaled_board[x][y]
+                if isinstance(tile, DoorPlaceholder):
+                    if tile.orientation == "vertical":
                         for y_repl in range(3):
                             upscaled_board[x - 1][y - 1 + y_repl] = FloorTile()
                             upscaled_board[x + 1][y - 1 + y_repl] = FloorTile()
+
+                        upscaled_board[x][y - 3] = ThinWallTileVerticalConnectorTop2()
+                        upscaled_board[x][y - 2] = ThinWallTileVerticalConnectorTop1()
                         upscaled_board[x][y - 1] = ThinWallTileVertical()
                         upscaled_board[x][y + 1] = ThinWallTileVertical()
+                        upscaled_board[x][y + 2] = ThinWallTileVerticalConnectorBottom()
                     else:
                         for x_repl in range(3):
-                            upscaled_board[x - 1 + x_repl][y - 1] = FloorTile()
+                            upscaled_board[x - 1 + x_repl][y - 1] = ThinWallTileHorizontal()
                             upscaled_board[x - 1 + x_repl][y + 1] = FloorTile()
-                        upscaled_board[x - 1][y] = ThinWallTileHorizontal()
-                        upscaled_board[x + 1][y] = ThinWallTileHorizontal()
-                    door = Door(None)
+
+                        upscaled_board[x - 2][y - 1] = ThinWallTileHorizontalConnectorLeft1()
+                        upscaled_board[x - 2][y] = ThinWallTileHorizontalConnectorLeft2()
+                        upscaled_board[x + 2][y - 1] = ThinWallTileHorizontalConnectorRight1()
+                        upscaled_board[x + 2][y] = ThinWallTileHorizontalConnectorRight2()
+
+                        upscaled_board[x - 1][y] = BottomWall()
+                        upscaled_board[x + 1][y] = BottomWall()
+
+                    door = Door(None, orientation=tile.orientation)
                     door.position = Point(x, y)
                     self.doors.append(door)
 
@@ -395,7 +404,6 @@ class Generator:
 
                     # Remove the blocked door so we can continue the floodfill
                     self.base[door.position.x][door.position.y] = FloorTile()
-
 
         return self.entities + self.doors
 

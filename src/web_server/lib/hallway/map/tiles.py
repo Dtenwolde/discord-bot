@@ -100,6 +100,90 @@ class ThinWallTileHorizontal(Tile):
         self.opaque = True
 
     def __repr__(self):
+        return "|"
+
+
+class ThinWallTileVerticalConnectorTop1(Tile):
+    def __init__(self):
+        super().__init__()
+        self.image = "thin_wall_vct1"
+
+        self.movement_allowed = False
+        self.opaque = True
+
+    def __repr__(self):
+        return "|"
+
+
+class ThinWallTileVerticalConnectorTop2(Tile):
+    def __init__(self):
+        super().__init__()
+        self.image = "thin_wall_vct2"
+
+        self.movement_allowed = False
+        self.opaque = True
+
+    def __repr__(self):
+        return "|"
+
+
+class ThinWallTileVerticalConnectorBottom(Tile):
+    def __init__(self):
+        super().__init__()
+        self.image = "thin_wall_vcb"
+
+        self.movement_allowed = False
+        self.opaque = False
+
+    def __repr__(self):
+        return "-"
+
+
+class ThinWallTileHorizontalConnectorLeft1(Tile):
+    def __init__(self):
+        super().__init__()
+        self.image = "thin_wall_hcr1"
+
+        self.movement_allowed = False
+        self.opaque = False
+
+    def __repr__(self):
+        return "-"
+
+
+class ThinWallTileHorizontalConnectorLeft2(Tile):
+    def __init__(self):
+        super().__init__()
+        self.image = "thin_wall_hcr2"
+
+        self.movement_allowed = False
+        self.opaque = False
+
+    def __repr__(self):
+        return "-"
+
+
+class ThinWallTileHorizontalConnectorRight1(Tile):
+    def __init__(self):
+        super().__init__()
+        self.image = "thin_wall_hcl1"
+
+        self.movement_allowed = False
+        self.opaque = False
+
+    def __repr__(self):
+        return "-"
+
+
+class ThinWallTileHorizontalConnectorRight2(Tile):
+    def __init__(self):
+        super().__init__()
+        self.image = "thin_wall_hcl2"
+
+        self.movement_allowed = False
+        self.opaque = False
+
+    def __repr__(self):
         return "-"
 
 
