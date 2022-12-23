@@ -3,7 +3,7 @@ from typing import List
 from src.web_server.lib.hallway.Utils import Point, EntityDirections
 from src.web_server.lib.hallway.algorithms import pathfinding
 from src.web_server.lib.hallway.entities.Passive import Passive
-from src.web_server.lib.hallway.entities.Spell import SpellEntity
+from src.web_server.lib.hallway.entities.spells.spell import SpellEntity
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 
 

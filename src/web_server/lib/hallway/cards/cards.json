@@ -6,7 +6,8 @@
   "mana_cost": 1,
   "damage": 1,
   "damage_type": "prc",
-  "animation_length": 10
+  "animation_length": 10,
+  "class_name": "SpearSpell"
 },{
   "name": "heal",
   "description": "This will heal you\nand all allies within\n3 squares of yourself.",
@@ -15,7 +16,8 @@
   "mana_cost": 3,
   "damage": 5,
   "damage_type": "heal",
-  "animation_length": 8
+  "animation_length": 8,
+  "class_name": "HealSpell"
 },{
   "name": "fireball",
   "description": "El classico.",
@@ -24,7 +26,8 @@
   "mana_cost": 5,
   "damage": 2,
   "damage_type": "fire",
-  "animation_length": 8
+  "animation_length": 8,
+  "class_name": "FireballSpell"
 },{
   "name": "axe",
   "description": "Ooga booga!\nMe Slash!",
@@ -33,5 +36,6 @@
   "mana_cost": 4,
   "damage": 7,
   "damage_type": "prc",
-  "animation_length": 5
+  "animation_length": 5,
+  "class_name": "AxeSpell"
 }]

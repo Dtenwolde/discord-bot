@@ -263,6 +263,9 @@ function initializeMenu() {
     deckView.setOnScroll(canvas, (e) => {
         deckView.viewportOffset.y += Math.sign(e.deltaY) * 40;
     });
+    cardView.setOnScroll(canvas, (e) => {
+        cardView.viewportOffset.y += Math.sign(e.deltaY) * 40;
+    });
 
     socket.on("deck", (data) => {
         console.log(data);
@@ -298,9 +301,6 @@ function createDeckButtons(data) {
             });
         });
         cardView.addObjects(cardButton, cardButton.card);
-    });
-    cardView.setOnScroll(canvas, (e) => {
-        cardView.viewportOffset.y += Math.sign(e.deltaY) * 40;
     });
 
     data.deck_cards.map((data, i) => {
@@ -376,7 +376,6 @@ function start() {
     game.initializePlayers();
     game.initializeCards();
     game.initializeEnemies();
-    game.initializeEntityAnimations();
 
     // Initialize player sprites
     for (let key in game.players) {

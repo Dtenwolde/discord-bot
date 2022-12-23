@@ -7,7 +7,7 @@ from src.web_server.lib.hallway.Utils import Point, EntityDirections, line_of_si
 from src.web_server.lib.hallway.cards.card import available_cards
 from src.web_server.lib.hallway.cards.deck import Deck
 from src.web_server.lib.hallway.entities.Passive import Passive
-from src.web_server.lib.hallway.entities.Spell import SpellEntity
+from src.web_server.lib.hallway.entities.spells.spell import SpellEntity
 from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 from src.web_server.lib.hallway.exceptions import InvalidAction
@@ -132,7 +132,7 @@ class PlayerClass(MovableEntity):
         self.visible_tiles = self.compute_line_of_sight()
 
     def movement_action(self):
-        super().movement_action()
+        move = super().movement_action()
 
         # Pickup item
         ground_item = self.game.board[self.position.x][self.position.y].item
@@ -140,6 +140,8 @@ class PlayerClass(MovableEntity):
             if isinstance(ground_item, CollectorItem):
                 self.item = ground_item
                 self.game.board[self.position.x][self.position.y].item = None
+
+        return move
 
     def collide(self, other):
         if isinstance(other, EnemyClass):
@@ -285,7 +287,7 @@ class PlayerClass(MovableEntity):
         if n_action >= len(self.deck.hand):
             return
 
-        if self.mana < self.deck.hand[n_action].mana_cost:
+        if self.mana < self.deck.get_card(n_action).mana_cost:
             return
 
         if self.queued_spell_idx == n_action:
@@ -295,9 +297,10 @@ class PlayerClass(MovableEntity):
 
     def post_movement_action(self):
         if self.queued_spell_idx is not None:
-            spell = self.deck.play_card(idx=self.queued_spell_idx)
+            spell_name = self.deck.play_card(idx=self.queued_spell_idx)
+            spell = available_cards[spell_name]
             self.mana -= spell.mana_cost
-            self.game.entities.append(SpellEntity(self, spell, f"{self.color}_{self.queued_spell_idx}", self.game))
+            self.game.entities.append(spell.create_object(player=self))
 
             self.queued_spell_idx = None
 

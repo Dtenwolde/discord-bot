@@ -88,6 +88,7 @@ class HallwayHunters:
         spawn_point = random.choice(self.room_centers)
 
         # Generate keys and door entities
+        self.entities.clear()
         entities = self.generator.generate_keys(spawn_point)
         self.add_entities(entities)
 

@@ -15,7 +15,6 @@ export class HallwayHunters {
         this.cards = [];
         this.enemies = [];
         this.enemySprites = [];
-        this.entitySprites = [];
         this.entities = [];
         this.cardCallback = callback;
     }
@@ -126,7 +125,6 @@ export class HallwayHunters {
             let enemyObj = this.enemies[enemy.uid];
             if (enemyObj === undefined) {
                 let src = this.enemySprites[enemy.sprite_name];
-                console.log(src);
                 if (src === undefined) {
                     throw "Invalid sprite name received from server: " + enemy.sprite_name;
                 }
@@ -367,53 +365,6 @@ export class HallwayHunters {
             directionLists[1],
             directionLists[2],
             directionLists[3]
-        );
-    }
-
-    initializeEntityAnimations() {
-        let directionalSpells = [
-            ["spear", 2],
-            ["axe", 4],
-        ];
-        directionalSpells.forEach(data => {
-            let spell = data[0];
-            let nFrames = data[1];
-            let directionLists = [];
-            ["0", "90", "180", "270"].forEach(d => {
-                let frames = [];
-                for (let i = 0; i < nFrames; i++) {
-                    frames.push(
-                        this.tileSet.tiles[`${spell}_${d}_${i}`]
-                    )
-                }
-                directionLists.push(frames);
-            });
-
-            this.entitySprites[spell] = new DirectionalAnimatedSpriteTile(
-                directionLists[0],
-                directionLists[1],
-                directionLists[2],
-                directionLists[3]
-            );
-        });
-
-        let sprites = [
-            this.tileSet.tiles["heal_0"],
-            this.tileSet.tiles["heal_1"],
-            this.tileSet.tiles["heal_2"],
-            this.tileSet.tiles["heal_3"],
-            this.tileSet.tiles["heal_4"],
-            this.tileSet.tiles["heal_4"],
-            this.tileSet.tiles["heal_4"],
-            this.tileSet.tiles["heal_4"],
-        ];
-        this.entitySprites["heal"] = new AnimatedSpriteTile(
-            sprites, {
-                zooms: [
-                    1, 1, 1, 1, 1, 2, 3, 4
-                ],
-                loop: false,
-            }
         );
     }
 }

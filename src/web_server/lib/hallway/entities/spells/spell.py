@@ -5,8 +5,8 @@ from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 
 
 class SpellEntity(MovableEntity):
-    def __init__(self, player, card: Card, unique_identifier: str, game):
-        super().__init__(game, unique_identifier)
+    def __init__(self, player, card: Card):
+        super().__init__(player.game)
         self.position = player.position
         self.direction = player.direction if card.ability_range != 0 else None
         self.movement_cooldown = 4
@@ -25,16 +25,9 @@ class SpellEntity(MovableEntity):
         return True
 
     def movement_action(self):
-        move = super().movement_action()
-        # TODO: Check enemy damage
+        return super().movement_action()
 
     def post_movement_action(self):
         super().post_movement_action()
-
-        if self.card.damage_type == "heal":
-            for player in self.game.player_list:
-                dist = player.position.manhattan_distance(self.position)
-                if dist <= self.card.radius:
-                    player.hp = min(player.max_hp, player.hp + self.card.damage)
-
         self.die()
+

@@ -23,6 +23,7 @@ class MovableEntity(Entity):
         self.movement_timer = 0
 
     def tick(self):
+        super().tick()
         self.movement_timer = max(0, self.movement_timer - 1)
 
     def change_position(self, point):
@@ -35,6 +36,7 @@ class MovableEntity(Entity):
         :return:
         """
         if not self.can_move:
+            self.moving = False
             raise InvalidAction("You cannot move.")
 
         if len(self.movement_queue) == 0:
@@ -59,10 +61,12 @@ class MovableEntity(Entity):
         if new_position.x > self.game.size - 1 or \
                 new_position.y > self.game.size - 1 or \
                 new_position.x < 0 or new_position.y < 0:
+            self.moving = False
             raise InvalidAction("You cannot move out of bounds.")
 
         tile = self.game.board[new_position.x][new_position.y]
         if not tile.movement_allowed:
+            self.moving = False
             raise InvalidAction("You cannot move on this tile.")
 
         can_move_through = True
@@ -99,10 +103,6 @@ class MovableEntity(Entity):
             "moving": self.moving,
         })
         return state
-
-    def die(self):
-        self.alive = False
-        self.game.entities.remove(self)
 
     @abstractmethod
     def post_movement_action(self):

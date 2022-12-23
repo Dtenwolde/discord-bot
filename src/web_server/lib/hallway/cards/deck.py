@@ -2,7 +2,7 @@ import copy
 import random
 
 from src.web_server import sio
-from src.web_server.lib.hallway.cards.card import available_cards
+from src.web_server.lib.hallway.cards.card import available_cards, Card
 from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.storage.database import db
 from src.web_server.lib.hallway.storage.model import StoredDeck
@@ -115,3 +115,6 @@ class Deck:
         self.active_deck = copy.deepcopy(self.selected_cards)
         random.shuffle(self.active_deck)
         self.hand.extend(self.active_deck[:min(self.STARTING_HAND_SIZE, len(self.active_deck))])
+
+    def get_card(self, n_action) -> Card:
+        return available_cards[self.hand[n_action]]
