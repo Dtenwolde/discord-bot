@@ -132,16 +132,7 @@ class PlayerClass(MovableEntity):
         self.visible_tiles = self.compute_line_of_sight()
 
     def movement_action(self):
-        attempted_move = super().movement_action()
-
-        new_position = self.position + attempted_move
-        tile = self.game.board[new_position.x][new_position.y]
-
-        if not tile.movement_allowed:
-            raise InvalidAction("You cannot move on this tile.")
-
-        # Reset the movement timer
-        self.movement_timer = self.movement_cooldown
+        super().movement_action()
 
         # Pickup item
         ground_item = self.game.board[self.position.x][self.position.y].item

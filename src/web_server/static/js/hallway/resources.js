@@ -118,9 +118,11 @@ export class TileSet {
         this.tiles["thin_wall_vct1"] = context.getImageData(19 * S, 16 * S, S, S);
         this.tiles["thin_wall_vct2"] = context.getImageData(20 * S, 16 * S, S, S);
 
-        this.tiles["thin_wall_hcl1"] = context.getImageData(17 * S, 17 * S, S, S);
+        this.tiles["key"] = context.getImageData(21 * S, 16 * S, S, S);
+
+        this.tiles["thin_wall_hcr1"] = context.getImageData(17 * S, 17 * S, S, S);
         this.tiles["thin_wall_h"] = context.getImageData(18 * S, 17 * S, S, S);
-        this.tiles["thin_wall_hcr1"] = context.getImageData(19 * S, 17 * S, S, S);
+        this.tiles["thin_wall_hcl1"] = context.getImageData(19 * S, 17 * S, S, S);
         this.tiles["thin_wall_hcl2"] = context.getImageData(20 * S, 17 * S, S, S);
         this.tiles["thin_wall_hcr2"] = context.getImageData(21 * S, 17 * S, S, S);
 

@@ -265,6 +265,7 @@ function initializeMenu() {
     });
 
     socket.on("deck", (data) => {
+        console.log(data);
         createDeckButtons(data);
     });
 }
@@ -371,9 +372,7 @@ let started = false;
 
 function start() {
     intervalID = requestAnimationFrame(gameLoop);
-    initializeLoading();
 
-    initializeMenu();
     game.initializePlayers();
     game.initializeCards();
     game.initializeEnemies();
@@ -419,11 +418,8 @@ function start() {
             }
             updateScoreboard();
         }
+    });
 
-    });
-    socket.on("message", (data) => {
-        console.log(data);
-    });
 
     // Request game state on initialization.
     socket.emit("game_state", {
@@ -438,26 +434,19 @@ function onCardClick(i, evt) {
     sendAction(String(i));
 }
 
-function initialize() {
-    let tileSet = new TileSet();
-
-    let setBackground = (image) => {
-        menuView.background = image
-    };
-
-    loadImages("/static/images/tiles/dungeon_sheet.png", (x) => tileSet.splitTileset(x)).then(() =>
-        loadImages("/static/images/tiles/background.png", setBackground).then(() => {
-            start();
-
-            // Emit join event for server to register user
-            socket.emit("join", {
-                "room": ROOM_ID,
-            });
-        }));
+function initialize(tileSet) {
     game = new HallwayHunters(tileView, UIView, tileSet, onCardClick);
+
+    initializeLoading();
+    initializeMenu();
+
+    socket.on("message", (data) => {
+        console.log(data);
+    });
 
     socket.on("join", (data) => {
         console.log(`${data} joined the room.`);
+        start();
     });
     let startTime;
 
@@ -510,10 +499,23 @@ function changeSettings() {
     socket.emit("change settings", data)
 }
 
-
 socket.on("set_session", (data) => {
     USER_NAME = data;
-    initialize();
+    // Load resources
+
+    let tileSet = new TileSet();
+    let setBackground = (image) => {
+        menuView.background = image
+    };
+    loadImages("/static/images/tiles/dungeon_sheet.png", (x) => tileSet.splitTileset(x)).then(() =>
+    loadImages("/static/images/tiles/background.png", setBackground).then(() => {
+        initialize(tileSet);
+
+        // Emit join event for server to register user
+        socket.emit("join", {
+            "room": ROOM_ID,
+        });
+    }));
 });
 
 // Start the game

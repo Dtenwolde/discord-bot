@@ -59,6 +59,7 @@ class DoorPlaceholder(Tile):
 
 class Generator:
     def __init__(self, generator_size):
+        self.DOOR_PERCENTAGE = 0.5
         self.generator_size = generator_size
         self.base: List[List[Tile]] = [[UnknownTile() for _ in range(generator_size)] for _ in range(generator_size)]
         self.room_centers: List[Point] = []
@@ -207,16 +208,32 @@ class Generator:
                 if i == 0:
                     tails.append(random_door)
                 if Point(random_door.x - 2, random_door.y) in region:
-                    self.base[random_door.x - 1][random_door.y] = DoorPlaceholder("vertical")
+                    if random.random() < self.DOOR_PERCENTAGE:
+                        tile = DoorPlaceholder("vertical")
+                    else:
+                        tile = FloorTile()
+                    self.base[random_door.x - 1][random_door.y] = tile
                     continue
                 if Point(random_door.x + 2, random_door.y) in region:
-                    self.base[random_door.x + 1][random_door.y] = DoorPlaceholder("vertical")
+                    if random.random() < self.DOOR_PERCENTAGE:
+                        tile = DoorPlaceholder("vertical")
+                    else:
+                        tile = FloorTile()
+                    self.base[random_door.x + 1][random_door.y] = tile
                     continue
                 if Point(random_door.x, random_door.y + 2) in region:
-                    self.base[random_door.x][random_door.y + 1] = DoorPlaceholder("horizontal")
+                    if random.random() < self.DOOR_PERCENTAGE:
+                        tile = DoorPlaceholder("horizontal")
+                    else:
+                        tile = FloorTile()
+                    self.base[random_door.x][random_door.y + 1] = tile
                     continue
                 if Point(random_door.x, random_door.y - 2) in region:
-                    self.base[random_door.x][random_door.y - 1] = DoorPlaceholder("horizontal")
+                    if random.random() < self.DOOR_PERCENTAGE:
+                        tile = DoorPlaceholder("horizontal")
+                    else:
+                        tile = FloorTile()
+                    self.base[random_door.x][random_door.y - 1] = tile
                     continue
 
     def remove_dead_ends(self):
@@ -421,6 +438,10 @@ class Generator:
         if generator_size % 2 == 0:
             raise ValueError("Room size cannot be an even number.")
 
+        self.doors.clear()
+        self.entities.clear()
+        self.room_centers.clear()
+        
         self.base = [[UnknownTile() for _ in range(generator_size)] for _ in range(generator_size)]
 
         self.room_generator(generator_size, attempts=30)

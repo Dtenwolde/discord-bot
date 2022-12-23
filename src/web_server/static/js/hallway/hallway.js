@@ -146,14 +146,17 @@ export class HallwayHunters {
             let entityObj = this.entities[entity.uid];
 
             if (entityObj === undefined) {
-                let src = this.entitySprites[entity.sprite_name];
+                let src = this.tileSet.tiles[entity.sprite_name];
                 if (src === undefined) {
                     throw "Invalid sprite name received from server: " + entity.sprite_name;
                 }
-                entityObj = Object.assign(Object.create(Object.getPrototypeOf(src)), src)
+                entityObj = new SpriteTile(src);
                 entityObj.z = 4;
                 this.view.addObjects(entityObj);
                 this.entities[entity.uid] = entityObj;
+            }
+            if (entityObj.image !== this.tileSet.tiles[entity.sprite_name]) {
+                entityObj.setImage(this.tileSet.tiles[entity.sprite_name]);
             }
             entityObj.renderable = true;
             entityObj.x = entity.position.x * 16;
@@ -412,10 +415,5 @@ export class HallwayHunters {
                 loop: false,
             }
         );
-
-        console.log(this.tileSet.tiles)
-        this.entitySprites["door_v"] = new SpriteTile(this.tileSet.tiles["door_v_0"])
-        this.entitySprites["door_h"] = new SpriteTile(this.tileSet.tiles["door_h_0"])
-        this.entitySprites["key"] = new SpriteTile(this.tileSet.tiles["collector_red"])
     }
 }

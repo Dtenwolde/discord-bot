@@ -65,10 +65,6 @@ class MovableEntity(Entity):
         if not tile.movement_allowed:
             raise InvalidAction("You cannot move on this tile.")
 
-        # Reset the movement timer
-        self.movement_timer = self.movement_cooldown
-        from src.web_server.lib.hallway.entities.player_class import PlayerClass
-
         can_move_through = True
         for entity in self.game.get_entities_at(new_position):
             if entity is self:
@@ -79,6 +75,8 @@ class MovableEntity(Entity):
 
         self.moving = self.can_move_through
         if can_move_through:
+            # Reset the movement timer
+            self.movement_timer = self.movement_cooldown
             self.position = new_position
             return move
 

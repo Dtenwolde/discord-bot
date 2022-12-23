@@ -96,7 +96,7 @@ class ThinWallTileHorizontal(Tile):
         super().__init__()
         self.image = "thin_wall_h"
 
-        self.movement_allowed = False
+        self.movement_allowed = True
         self.opaque = True
 
     def __repr__(self):

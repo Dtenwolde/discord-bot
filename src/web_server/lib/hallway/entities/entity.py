@@ -25,6 +25,13 @@ class Entity:
 
         self.sprite_name = None
 
+        # Animation variables
+        self.animating = False
+        self.loop = False
+        self.animation_sprite_names = []
+        self.frame_duration = 5
+        self.current_tick = 0
+
         self.class_name = None
 
         self.updated = True
@@ -40,14 +47,22 @@ class Entity:
         """
         pass
 
-    @abstractmethod
     def tick(self):
         """
         Every entity-tick, this function will get called.
         An entity-tick will happen twice per round, once after the player turn, and once after the enemy turn.
         :return:
         """
-        pass
+        if self.animating:
+            self.current_tick = (self.current_tick + 1) % (self.frame_duration * len(self.animation_sprite_names))
+
+            # Check if we reached the end of the animation
+            if self.current_tick == 0 and not self.loop:
+                self.animating = False
+                return
+
+            current_frame = self.current_tick // self.frame_duration
+            self.sprite_name = self.animation_sprite_names[current_frame]
 
     @abstractmethod
     def collide(self, other: Entity) -> bool:
