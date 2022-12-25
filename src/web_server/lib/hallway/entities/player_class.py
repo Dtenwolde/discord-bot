@@ -4,15 +4,13 @@ from typing import Optional, List
 from src.web_server.lib.hallway.Items import Item, CollectorItem
 from src.web_server.lib.hallway.Utils import Point, EntityDirections, line_of_sight_endpoints, \
     point_interpolator
-from src.web_server.lib.hallway.cards.card import available_cards
 from src.web_server.lib.hallway.cards.deck import Deck
 from src.web_server.lib.hallway.entities.Passive import Passive
-from src.web_server.lib.hallway.entities.spells.spell import SpellEntity
 from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
+from src.web_server.lib.hallway.entities.spells import available_cards, SpellEntity
 from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.map.tiles import FloorTile
-
 
 SPRINT_COOLDOWN = 10 * 60  # Ticks
 KILL_COOLDOWN = 10 * 60  # Ticks
@@ -24,6 +22,33 @@ class PlayerState:
     NOT_READY = 2
     PREPARING_GAME = 3
     READY_FOR_GAME = 4
+
+
+class PlayerStat(object):
+    def __init__(self, current, total):
+        self.max = total
+        self.current = current
+        super().__init__()
+
+    def __add__(self, other):
+        if isinstance(other, int):
+            return PlayerStat(min(self.current + other, self.max), self.max)
+
+    def __sub__(self, other):
+        if isinstance(other, int):
+            return PlayerStat(max(self.current - other, 0), self.max)
+
+    def __lt__(self, other):
+        if isinstance(other, int):
+            return self.current < other
+
+    def __le__(self, other):
+        if isinstance(other, int):
+            return self.current <= other
+
+    def __ge__(self, other):
+        if isinstance(other, int):
+            return self.current >= other
 
 
 class PlayerClass(MovableEntity):
@@ -65,13 +90,11 @@ class PlayerClass(MovableEntity):
         self.socket = socket_id
 
         # Fixed stats
-        self.max_hp = 15
-        self.max_mana = 10
         self.mana_regen = 1
 
         # Active stats
-        self.hp = 15
-        self.mana = 5
+        self.hp = PlayerStat(10, 15)
+        self.mana = PlayerStat(5, 10)
 
         # Cards to play
         self.deck = Deck(self)
@@ -119,14 +142,6 @@ class PlayerClass(MovableEntity):
     def tick(self):
         super().tick()
 
-        for passive in self.passives[:]:
-            passive.tick()
-            if passive.time == 0:
-                self.passives.remove(passive)
-
-        if self.position != self.last_position or self.direction != self.direction:
-            self.update_line_of_sight()
-
     def update_line_of_sight(self):
         self.game.updated_line_of_sight = True
         self.visible_tiles = self.compute_line_of_sight()
@@ -140,6 +155,10 @@ class PlayerClass(MovableEntity):
             if isinstance(ground_item, CollectorItem):
                 self.item = ground_item
                 self.game.board[self.position.x][self.position.y].item = None
+
+        # Update line of sight
+        if self.position != self.last_position or self.direction != self.direction:
+            self.update_line_of_sight()
 
         return move
 
@@ -206,10 +225,10 @@ class PlayerClass(MovableEntity):
             "dead": self.dead,
             "stored_items": [item.to_json() for item in self.stored_items],
             "state": self.action_state,
-            "hp": self.hp,
-            "mana": self.mana,
-            "max_hp": self.max_hp,
-            "max_mana": self.max_mana,
+            "hp": self.hp.current,
+            "mana": self.mana.current,
+            "max_hp": self.hp.max,
+            "max_mana": self.mana.max,
             "item": self.item.to_json() if self.item else None,
             "hand": [],
             "movement_queue": [move.to_json() for move in self.movement_queue],
@@ -295,16 +314,43 @@ class PlayerClass(MovableEntity):
         else:
             self.queued_spell_idx = n_action
 
+    def cast_spell(self):
+        if self.queued_spell_idx is None:
+            return
+
+        spell_name = self.deck.play_card(idx=self.queued_spell_idx)
+        spell = available_cards[spell_name]
+        self.mana -= spell.mana_cost
+
+        spell_object = spell.create_object(player=self)
+        spell_object: SpellEntity
+
+        for passive in self.passives:
+            spell_object.card.damage = passive.damage_mod_multiplicative(
+                spell_object.card.damage,
+                spell_object.card.damage_type
+            )
+
+        for passive in self.passives:
+            spell_object.card.damage = passive.damage_mod_additive(
+                spell_object.card.damage,
+                spell_object.card.damage_type
+            )
+
+        self.game.entities.append(spell_object)
+
+        self.queued_spell_idx = None
+
     def post_movement_action(self):
-        if self.queued_spell_idx is not None:
-            spell_name = self.deck.play_card(idx=self.queued_spell_idx)
-            spell = available_cards[spell_name]
-            self.mana -= spell.mana_cost
-            self.game.entities.append(spell.create_object(player=self))
+        self.cast_spell()
 
-            self.queued_spell_idx = None
+        self.mana += self.mana_regen
 
-        self.mana = min(self.mana + self.mana_regen, self.max_mana)
+        # Apply passive timing
+        for passive in self.passives[:]:
+            passive.tick()
+            if passive.time == 0:
+                self.passives.remove(passive)
 
     def damage(self, damage):
         self.hp -= damage

@@ -13,7 +13,6 @@ export class HallwayHunters {
         this.UIView = UIView;
         this.tileSet = tileSet;
         this.cards = [];
-        this.enemies = [];
         this.enemySprites = [];
         this.entities = [];
         this.cardCallback = callback;
@@ -59,7 +58,6 @@ export class HallwayHunters {
         visible_tiles: [
             {x: 0, y: 0, tile: {}}
         ],
-        visible_enemies: [],
         board: [],
 
     };
@@ -120,25 +118,6 @@ export class HallwayHunters {
             this.players[player.color].update(player);
         });
 
-        // Add enemy objects to view, and update those that exist
-        data.visible_enemies.forEach(enemy => {
-            let enemyObj = this.enemies[enemy.uid];
-            if (enemyObj === undefined) {
-                let src = this.enemySprites[enemy.sprite_name];
-                if (src === undefined) {
-                    throw "Invalid sprite name received from server: " + enemy.sprite_name;
-                }
-                enemyObj = Object.assign(Object.create(Object.getPrototypeOf(src)), src)
-                enemyObj.z = 3;
-                this.view.addObjects(enemyObj);
-                this.enemies[enemy.uid] = enemyObj;
-            }
-            enemyObj.renderable = !enemy.dead;
-            enemyObj.x = enemy.position.x * 16;
-            enemyObj.y = enemy.position.y * 16;
-            enemyObj.orientation = enemy.direction;
-        });
-
         data.visible_entities.forEach(entity => {
             if (entity.sprite_name === undefined) return;
             let entityObj = this.entities[entity.uid];
@@ -156,6 +135,7 @@ export class HallwayHunters {
             if (entityObj.image !== this.tileSet.tiles[entity.sprite_name]) {
                 entityObj.setImage(this.tileSet.tiles[entity.sprite_name]);
             }
+            entityObj.zoom = entity.zoom;
             entityObj.renderable = true;
             entityObj.x = entity.position.x * 16;
             entityObj.y = entity.position.y * 16;

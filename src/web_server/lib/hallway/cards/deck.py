@@ -2,14 +2,19 @@ import copy
 import random
 
 from src.web_server import sio
-from src.web_server.lib.hallway.cards.card import available_cards, Card
+from src.web_server.lib.hallway.entities.spells import available_cards
+from src.web_server.lib.hallway.entities.spells.card import Card
 from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.storage.database import db
 from src.web_server.lib.hallway.storage.model import StoredDeck
 
 
 def create_base_deck():
-    card_names = ["heal"] * 10 + ["axe"] * 10 + ["spear"] * 10
+    card_names = []
+
+    # TODO: Remove this debug statement
+    [card_names.extend([name] * 10) for name in available_cards.keys()]
+    # card_names = ["regeneration"] * 10 + ["axe"] * 10 + ["spear"] * 10
     deck = StoredDeck()
     deck.active_deck = []
     deck.obtained_cards = card_names
@@ -96,12 +101,13 @@ class Deck:
         session = db.session()
         deck = session.query(StoredDeck).filter(StoredDeck.player_name == self.player.username).one_or_none()
 
+        deck = None  # TODO: Remove this debug statement
         if deck is None:
             # Create deck if this is the first time playing
             deck = create_base_deck()
             deck.player_name = self.player.username
-            session.add(deck)
-            session.commit()
+            # session.add(deck)
+            # session.commit()
         else:
             session.expunge(deck)
 

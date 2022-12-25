@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 from src.web_server.lib.hallway.Utils import EntityDirections, direction_to_point
-from src.web_server.lib.hallway.entities.entity import Entity
+from src.web_server.lib.hallway.entities.entity import Entity, EntityAnimationFrames
 from src.web_server.lib.hallway.exceptions import InvalidAction
 
 
@@ -23,8 +23,37 @@ class MovableEntity(Entity):
         self.movement_timer = 0
 
     def tick(self):
+        if self.animation_frames is not None:
+            if self.moving:
+                # Begin with starting frames
+                if self.animation_frames.state == EntityAnimationFrames.State.IDLE:
+                    self.animation_frames.state = EntityAnimationFrames.State.STARTING
+                    self.current_tick = 0
+                    self.loop = False
+                    self.animating = True
+                # When done with the non-looping starting frames, set moving animation
+                elif not self.animating:
+                    self.animation_frames.state = EntityAnimationFrames.State.MOVING
+                    self.current_tick = 0
+                    self.loop = True
+                    self.animating = True
+            else:
+                # Go back to the idle loop
+                if not self.animating:
+                    self.animation_frames.state = EntityAnimationFrames.State.IDLE
+                    self.current_tick = 0
+                    self.loop = True
+                    self.animating = True
+
         super().tick()
         self.movement_timer = max(0, self.movement_timer - 1)
+
+    def post_movement_action(self):
+        if self.animation_frames is not None:
+            self.animation_frames.state = EntityAnimationFrames.State.ENDING
+            self.current_tick = 0
+            self.loop = False
+            self.animating = True
 
     def change_position(self, point):
         self.position = point
@@ -103,10 +132,6 @@ class MovableEntity(Entity):
             "moving": self.moving,
         })
         return state
-
-    @abstractmethod
-    def post_movement_action(self):
-        pass
 
     @abstractmethod
     def prepare_movement(self):

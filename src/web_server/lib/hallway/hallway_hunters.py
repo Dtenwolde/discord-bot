@@ -8,6 +8,8 @@ from enum import Enum
 from typing import List, Optional, Dict
 
 from src.web_server import sio, timing
+from src.web_server.lib.hallway.entities.enemies.MonkeyBall import MonkeyBall
+from src.web_server.lib.hallway.entities.enemies.Sloth import Sloth
 
 from src.web_server.lib.hallway.map import tiles
 from src.web_server.lib.hallway.Utils import Point
@@ -18,7 +20,6 @@ from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.exceptions import InvalidAction
 from src.web_server.lib.hallway.entities.Spawner import EntitySpawner
 from src.web_server.lib.hallway.map.generator import Generator
-
 
 games: Dict[int, HallwayHunters] = {}
 
@@ -43,7 +44,6 @@ class HallwayHunters:
         self.generator = Generator(self.size)
         self.room_centers: List[Point] = []
         self.board: List[List[tiles.Tile]] = []
-        self.enemies: List[EnemyClass] = []
         self.entities: List[Entity] = []
 
         # Generate this to send to every player initially
@@ -89,8 +89,8 @@ class HallwayHunters:
 
         # Generate keys and door entities
         self.entities.clear()
-        entities = self.generator.generate_keys(spawn_point)
-        self.add_entities(entities)
+        # entities = self.generator.generate_keys(spawn_point)
+        # self.add_entities(entities)
 
         spawn_point_modifier = [
             Point(0, 0),
@@ -103,6 +103,14 @@ class HallwayHunters:
             player.change_position(spawn_point + spawn_point_modifier[i])
             player.start()
             sio.emit("game_state", self.export_board(player), room=player.socket, namespace="/hallway")
+
+        # Create enemy for testing animations
+        enemy = Sloth(self)
+        enemy.change_position(spawn_point + spawn_point_modifier[-1])
+        self.spawn_enemy(enemy)
+        enemy = MonkeyBall(self)
+        enemy.change_position(spawn_point + spawn_point_modifier[-2])
+        self.spawn_enemy(enemy)
 
         self.turn = 0
 
@@ -148,7 +156,8 @@ class HallwayHunters:
         Process all entities, returns False if nothing else needs to be done.
         :return:
         """
-        movable_entities = [entity for entity in self.entities if isinstance(entity, MovableEntity)]
+        movable_entities = [entity for entity in self.entities if
+                            isinstance(entity, MovableEntity) and not isinstance(entity, EnemyClass)]
         for entity in movable_entities:
             if entity.movement_timer == 0:
                 try:
@@ -196,7 +205,8 @@ class HallwayHunters:
         self.increment_turn()
 
     def process_enemy_turn(self):
-        for enemy in self.enemies:
+        enemies = [entity for entity in self.entities if isinstance(entity, EnemyClass)]
+        for enemy in enemies:
             if enemy.movement_timer == 0:
                 try:
                     enemy.movement_action()
@@ -204,12 +214,12 @@ class HallwayHunters:
                     self.updated_line_of_sight = True
                 except InvalidAction:
                     pass
-        for enemy in self.enemies:
+        for enemy in enemies:
             if len(enemy.movement_queue) != 0 or enemy.movement_timer != 0:
                 return
 
         # If all movement has been processed, process all queued spells
-        for enemy in self.enemies:
+        for enemy in enemies:
             # Do end-of-turn stat updates and allow for new inputs.
             enemy.post_movement_action()
 
@@ -219,25 +229,21 @@ class HallwayHunters:
         # Resolve entities
         for entity in self.entities:
             entity.tick()
+        for player in self.player_list:
+            player.tick()
 
         # Resolve entities in progress
         if self.processing_entities:
             self.processing_entities = self.process_entities()
         # Player turn
         elif self.turn % 2 == 0:
-            for player in self.player_list:
-                # Maybe check if this is allowed, maybe not
-                player.tick()
-
             # If all players are ready, we can stop this preparation and go to next turn
             self.process_player_turn()
 
         # Enemy turn
         else:
-            for enemy in self.enemies:
-                enemy.tick()
-
             self.process_enemy_turn()
+
         # Update the player of all changes that occurred
         self.update_players()
         # After having sent the update to all players, empty board changes list
@@ -287,18 +293,13 @@ class HallwayHunters:
             })
 
             # Share visible enemies too user
-            visible_enemies = []
             visible_entities = []
             for tile in visible_tiles:
-                for enemy in self.enemies:
-                    if enemy.position == tile:
-                        visible_enemies.append(enemy)
                 for entity in self.entities:
                     if entity.position == tile:
                         visible_entities.append(entity)
 
             data.update({
-                "visible_enemies": [enemy.to_json() for enemy in visible_enemies],
                 "visible_entities": [entity.to_json() for entity in visible_entities]
             })
 
@@ -384,14 +385,13 @@ class HallwayHunters:
         self.processing_entities = True
         if self.turn % 2 == 1:
             # We just started an enemy turn, prepare all movement for the enemies
-            for enemy in self.enemies:
+            for enemy in [entity for entity in self.entities if isinstance(entity, MovableEntity)]:
                 enemy.prepare_movement()
 
     def get_entities_at(self, position):
         all_entities = []
         all_entities.extend([x for x in self.player_list if x.position == position])
         all_entities.extend([x for x in self.entities if x.position == position])
-        all_entities.extend([x for x in self.enemies if x.position == position])
         return all_entities
 
     def add_entities(self, entities):
@@ -402,3 +402,6 @@ class HallwayHunters:
     def remove_entity(self, entity):
         self.entities.remove(entity)
         self.removed_entity_ids.append(entity.uid)
+
+    def spawn_enemy(self, enemy):
+        self.entities.append(enemy)

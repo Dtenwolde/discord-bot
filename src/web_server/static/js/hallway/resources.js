@@ -166,6 +166,14 @@ export class TileSet {
             this.tiles["slime_south_" + i] = context.getImageData((i + 6) * S, 16 * S, S, S);
             this.tiles["slime_north_" + i] = context.getImageData((i + 9) * S, 16 * S, S, S);
         }
+        ["ru", "ld"].map((direction, y) => {
+            for (let i = 0; i < 7; i++) {
+                this.tiles[`monkeyball_${i}_${direction}`] = context.getImageData(i * S, (17 + y) * S, S, S);
+            }
+        });
+        for (let i = 0; i < 8; i++) {
+            this.tiles[`sloth_${i}`] = context.getImageData(i * S, 19 * S, S, S);
+        }
 
         // Load all spells into the tiles object
         for (let i = 0; i < 2; i++) {

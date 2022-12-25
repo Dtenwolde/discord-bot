@@ -1,21 +1,21 @@
 from src.web_server.lib.hallway.Utils import direction_to_point, Point
-from src.web_server.lib.hallway.cards.card import Card
+from src.web_server.lib.hallway.entities.spells.card import Card
 from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 
 
 class SpellEntity(MovableEntity):
-    def __init__(self, player, card: Card):
+    card: Card = None
+
+    def __init__(self, player, animation_length=1):
         super().__init__(player.game)
+
         self.position = player.position
-        self.direction = player.direction if card.ability_range != 0 else None
+        self.direction = player.direction if self.card.ability_range != 0 else None
         self.movement_cooldown = 4
-        self.card = card
-        self.movement_queue = [direction_to_point(player.direction)] * card.ability_range
+        self.movement_queue = [direction_to_point(player.direction)] * self.card.ability_range
 
-        self.sprite_name = self.card.name
-
-        waiting_ticks = max(0, card.animation_length - len(self.movement_queue))
+        waiting_ticks = max(0, animation_length - len(self.movement_queue))
         self.movement_queue.extend([Point(0, 0)] * waiting_ticks)
 
     def prepare_movement(self):
@@ -30,4 +30,5 @@ class SpellEntity(MovableEntity):
     def post_movement_action(self):
         super().post_movement_action()
         self.die()
+
 

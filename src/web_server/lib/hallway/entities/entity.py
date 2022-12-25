@@ -1,8 +1,41 @@
 from __future__ import annotations
 
 import uuid
-from src.web_server.lib.hallway.Utils import Point
+from enum import Enum
+from typing import Optional
+
+from src.web_server.lib.hallway.Utils import Point, EntityDirections
 from abc import abstractmethod
+
+
+class EntityAnimationFrames:
+    class State(Enum):
+        IDLE = 0
+        STARTING = 1
+        MOVING = 2
+        ENDING = 3
+
+    def __init__(self, idle_frames, move_frames=None, start_move_frames=None, end_move_frames=None):
+        self._frames = {
+            self.State.IDLE: idle_frames,
+            self.State.STARTING: start_move_frames,
+            self.State.MOVING: move_frames,
+            self.State.ENDING: end_move_frames
+        }
+        self.state = self.State.IDLE
+
+    def get_animation_frames(self):
+        assert self._frames[self.state] is not None, f"You did not specify an animation for '{self.state.name}'."
+        return self._frames[self.state]
+
+
+class SimpleEntityAnimationFrames:
+    def __init__(self, frames):
+        self.frames = frames
+        self.state = None  # Set this to be consistent with EntityAnimationFrames
+
+    def get_animation_frames(self):
+        return self.frames
 
 
 class Entity:
@@ -14,23 +47,34 @@ class Entity:
      - game, the game of which this entity is part
      - can_move_through: bool, solid units have to check if they can move through the entity with this variable
     """
+
     def __init__(self, game, unique_identifier=None):
         if unique_identifier is None:
             unique_identifier = str(uuid.uuid4())
         self.uid = unique_identifier
         self.position = Point(1, 1)
+        self.direction = None
 
         from src.web_server.lib.hallway.hallway_hunters import HallwayHunters
         self.game: HallwayHunters = game
 
-        self.sprite_name = None
-
         # Animation variables
         self.animating = False
         self.loop = False
-        self.animation_sprite_names = []
+        self.directional_animation_frames: dict[EntityDirections, Optional[EntityAnimationFrames]] = {
+            EntityDirections.UP: None,
+            EntityDirections.DOWN: None,
+            EntityDirections.LEFT: None,
+            EntityDirections.RIGHT: None,
+        }
+        self.animation_frames = None
+        self.animation_zoom = []
         self.frame_duration = 5
         self.current_tick = 0
+
+        # Current sprite string and the zoom level
+        self.sprite_name = None
+        self.zoom = 1
 
         self.class_name = None
 
@@ -50,11 +94,17 @@ class Entity:
     def tick(self):
         """
         Every entity-tick, this function will get called.
-        An entity-tick will happen twice per round, once after the player turn, and once after the enemy turn.
+        An entity-tick will happen at the server tick-rate
         :return:
         """
         if self.animating:
-            self.current_tick = (self.current_tick + 1) % (self.frame_duration * len(self.animation_sprite_names))
+            # Check if we have a direction, and directional animations are set
+            if self.direction is not None and self.directional_animation_frames[self.direction] is not None:
+                self.animation_frames = self.directional_animation_frames[self.direction]
+
+            frames = self.animation_frames.get_animation_frames()
+
+            self.current_tick = (self.current_tick + 1) % (self.frame_duration * len(frames))
 
             # Check if we reached the end of the animation
             if self.current_tick == 0 and not self.loop:
@@ -62,7 +112,13 @@ class Entity:
                 return
 
             current_frame = self.current_tick // self.frame_duration
-            self.sprite_name = self.animation_sprite_names[current_frame]
+
+            # Set current animation sprite and zoom level
+            self.sprite_name = frames[current_frame]
+            if len(self.animation_zoom) == len(frames):
+                self.zoom = self.animation_zoom[current_frame]
+            else:
+                self.zoom = 1
 
     @abstractmethod
     def collide(self, other: Entity) -> bool:
@@ -89,6 +145,7 @@ class Entity:
         state = {
             "uid": self.uid,
             "sprite_name": self.sprite_name,
+            "zoom": self.zoom,
             "position": self.position.to_json()
         }
         return state

@@ -38,4 +38,14 @@
   "damage_type": "prc",
   "animation_length": 5,
   "class_name": "AxeSpell"
+},{
+  "name": "heal",
+  "description": "This will heal you\nand all allies within\n3 squares of yourself.",
+  "ability_range": 0,
+  "radius": 3,
+  "mana_cost": 3,
+  "damage": 5,
+  "damage_type": "heal",
+  "animation_length": 8,
+  "class_name": "HealSpell"
 }]

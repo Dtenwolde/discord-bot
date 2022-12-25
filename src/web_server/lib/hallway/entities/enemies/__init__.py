@@ -56,6 +56,7 @@ class EnemyClass(MovableEntity):
         self.dead = True
         self.can_move = False
         self.movement_queue.clear()
+        super().die()
 
     def tick(self):
         super().tick()
@@ -71,9 +72,6 @@ class EnemyClass(MovableEntity):
             "dead": self.dead,
         })
         return state
-
-    def post_movement_action(self):
-        pass
 
     def prepare_movement(self):
         if self.dead:

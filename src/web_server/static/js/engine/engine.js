@@ -55,11 +55,14 @@ export class SpriteTile extends Rectangle {
         this.image = "";
         this.setImage(image);
         this.renderable = false;
+        this.zoom = 1;
         this.z = 0;
     }
 
     render(context) {
-        context.drawImage(this.image, this.x, this.y, this.width, this.height);
+        let x = this.x - (this.width * (this.zoom - 1)) / 2;
+        let y = this.y - (this.height * (this.zoom - 1)) / 2;
+        context.drawImage(this.image, x, y, this.width * this.zoom, this.height * this.zoom);
     }
 
     setImage(image) {
@@ -607,6 +610,8 @@ export class ScrollableView extends View {
 
     setOnScroll(canvas, callback) {
         canvas.addEventListener("wheel", (evt) => {
+            if (!this.renderable) return;
+
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;

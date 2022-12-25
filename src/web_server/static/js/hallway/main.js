@@ -50,7 +50,7 @@ menuView.addChild(deckView);
 const statsView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Informative stats view (fps etc)
 const UIView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // UI View in game, docked at the bottom
 const scoreView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // view for scoreboard
-const tileView = new View(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Game view
+const tileView = new ScrollableView(context, 0, 0, canvas.clientWidth, canvas.clientHeight); // Game view
 tileView.zoom = 3;
 // The gameView needs a center point to put on the player
 tileView.cameraCenter = new Point(0, 0);
@@ -344,7 +344,6 @@ function initializeLoading() {
     loadingView.addObjects(background, overlay, circleLoading, loadingView.infoText);
 }
 
-
 function updateScoreboard() {
     scoreView.deleteLayer(0, canvas);
     let sorted_score = [];
@@ -467,6 +466,11 @@ function initialize(tileSet) {
         if (VALID_ACTIONS.indexOf(ev.key) !== -1) {
             sendAction(ev.key);
         }
+    });
+
+    tileView.setOnScroll(canvas, (e) => {
+        tileView.zoom += Math.sign(e.deltaY) * -0.5;
+        tileView.zoom = Math.max(Math.min(tileView.zoom, 4), 1)
     });
 }
 
