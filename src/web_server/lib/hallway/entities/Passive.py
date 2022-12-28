@@ -1,3 +1,6 @@
+import uuid
+
+
 class PassiveModifiers(object):
     def __init__(self):
         self.dmm = 1  # Damage multiplier multiplicative
@@ -11,6 +14,7 @@ class PassiveModifiers(object):
 class Passive(object):
     def __init__(self, player, time, name="", callback=None, args=()):
         from src.web_server.lib.hallway.entities.player_class import PlayerClass
+        self.uid = str(uuid.uuid4())
         self.name = name
         self.total_time = time
         self.time = time
@@ -47,6 +51,7 @@ class Passive(object):
         :return:
         """
         return {
+            "uid": self.uid,
             "name": self.name,
             "time": self.time,
             "total_time": self.total_time,
@@ -57,4 +62,3 @@ class HPRegeneration(Passive):
     def __init__(self, player, time, regen_mod):
         super().__init__(player, time, "HP Regen")
         self.mods.hp_regen = regen_mod
-

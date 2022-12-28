@@ -4,10 +4,13 @@ from src.web_server.lib.hallway.entities.entity import EntityAnimationFrames
 
 
 class MonkeyBall(EnemyClass):
+
     def __init__(self, game):
         super().__init__("monkeyball", game)
         self.hp = 2
+
         self.MAX_MOVEMENT = 10
+        self.BASE_MOVEMENT = 10
 
         # Set right and up animation frames
         self.idle_ru = [f"monkeyball_{i}_ru" for i in range(2)]

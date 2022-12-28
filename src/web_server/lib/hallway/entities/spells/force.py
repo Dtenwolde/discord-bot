@@ -1,0 +1,62 @@
+import copy
+import uuid
+
+from src.web_server.lib.hallway.Utils import EntityDirections, direction_to_point
+from src.web_server.lib.hallway.entities.entity import SimpleEntityAnimationFrames, Entity
+from src.web_server.lib.hallway.entities.spells import SpellEntity
+from src.web_server.lib.hallway.entities.spells.card import Card
+from src.web_server.lib.hallway.exceptions import InvalidAction
+
+
+class Force(SpellEntity):
+    card = Card(
+        name="force",
+        description="Forces enemies within a 3-wide line to be pushed back.",
+        ability_range=5,
+        radius=0,
+        mana_cost=3,
+        damage=0,
+        damage_type="heal",
+        class_name="Force"
+    )
+
+    def __init__(self, player):
+        frames = [f"force_{player.direction.value}_{i}" for i in [0, 1]]
+
+        super().__init__(player, animation_length=len(frames))
+
+        self.animation_frames = SimpleEntityAnimationFrames(frames)
+
+        self.sprite_name = self.animation_frames.get_animation_frames()[0]
+        self.frame_duration = 10
+        self.animating = True
+        self.loop = False
+
+        assert self.direction is not None
+
+        # Create left and right flank for the spell
+        left = copy.copy(self)
+        left.movement_queue = copy.copy(self.movement_queue)
+        left.uid = str(uuid.uuid4())
+        left.position += direction_to_point(EntityDirections.rotate(self.direction, 90))
+        right = copy.copy(self)
+        right.movement_queue = copy.copy(self.movement_queue)
+        right.uid = str(uuid.uuid4())
+        right.position += direction_to_point(EntityDirections.rotate(self.direction, 270))
+
+        self.entities.extend([left, right])
+
+    def movement_action(self):
+        try:
+            super().movement_action()
+        except InvalidAction as e:
+            self.die()
+
+    def collide(self, other: Entity) -> bool:
+        from src.web_server.lib.hallway.entities.enemies import EnemyClass
+        if isinstance(other, EnemyClass):
+            # Add my own movement to the entities which are to be pushed back
+            other.movement_queue.extend(self.movement_queue)
+            other.movement_cooldown = self.movement_cooldown
+
+        return True

@@ -509,9 +509,12 @@ export class View {
     }
 
     removeObject(object, layer) {
+        if (layer === undefined) {
+            layer = object.z;
+        }
         const index = this.objects[layer].indexOf(object);
         if (index > -1) {
-            this.objects[layer] = this.objects[layer].splice(index, 1);
+            this.objects[layer].splice(index, 1);
         }
     }
 

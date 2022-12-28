@@ -1,3 +1,4 @@
+from __future__ import annotations
 import math
 from enum import Enum
 
@@ -70,12 +71,15 @@ class Point:
     __repr__ = __str__
 
 
-print("Initialized entitydirections")
 class EntityDirections(Enum):
     UP = 0
     RIGHT = 90
     DOWN = 180
     LEFT = 270
+
+    @staticmethod
+    def rotate(inp: EntityDirections, angle):
+        return EntityDirections((inp.value + angle) % 360)
 
 
 def direction_to_point(direction: EntityDirections):

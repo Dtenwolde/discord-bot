@@ -1,7 +1,7 @@
 import {
     DrawableText,
     RollingAverage,
-    Point, Rectangle, ColorTile, SpriteTile, DirectionalAnimatedSpriteTile, AnimatedSpriteTile
+    Point, Rectangle, ColorTile, SpriteTile, DirectionalAnimatedSpriteTile, AnimatedSpriteTile, CircularCooldown
 } from "../engine/engine.js";
 import {COLORS} from "./resources.js";
 import {Card, CARDBACK_COLOR, CARDBACK_SELECTED_COLOR, DAMAGE_COLOR, Player} from "./player.js";
@@ -51,7 +51,8 @@ export class HallwayHunters {
             passives: [{
                 name: "",
                 time: 0,
-                total_time: 0
+                total_time: 0,
+                uid: ""
             }],
             camera_list: []
         },
@@ -61,6 +62,7 @@ export class HallwayHunters {
         board: [],
 
     };
+
     stats = {
         ping: new RollingAverage(5),
         stateTime: new RollingAverage(5),
@@ -77,6 +79,7 @@ export class HallwayHunters {
     items = [];
 
     players = {};
+    passives = {};
 
     setState(data) {
         let start = performance.now();
@@ -98,6 +101,9 @@ export class HallwayHunters {
             ...this.state,
             ...data
         };
+
+        this.setPassives()
+
         // This marks the tiles which are visible
         this.lookup = {};
         this.state.visible_tiles.forEach((obj) => {
@@ -188,6 +194,39 @@ export class HallwayHunters {
         this.stats.stateTime.put(performance.now() - start);
     };
 
+    setPassives() {
+        /*
+         * Remove passives from UI which are no longer active.
+         */
+        Object.keys(this.passives).forEach((uid) => {
+            let found = false;
+            for (let i = 0; i < this.state.player_data.passives.length; i++) {
+                if (uid === this.state.player_data.passives[i].uid) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                this.UIView.removeObject(this.passives[uid]);
+            }
+        });
+
+        /*
+         * Set player passive renderable objects.
+         */
+        this.state.player_data.passives.map((p, i) => {
+            const radius = 20;
+            const padding = 4;
+            const width = radius * 3 + padding;
+            let passiveObj = this.passives[p.uid];
+            if (passiveObj === undefined) {
+                passiveObj = new CircularCooldown(200 + width * i, 30 + width, radius);
+                passiveObj.textObject.setText(p.name);
+                this.passives[p.uid] = passiveObj;
+                this.UIView.addObjects(passiveObj);
+            }
+            passiveObj.progress = p.time / p.total_time;
+        });
+    }
 
     updateBoardSprites(tiles) {
         tiles.forEach(obj => {

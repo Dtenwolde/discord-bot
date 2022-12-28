@@ -3,7 +3,8 @@ import src.web_server.lib.hallway.entities.spells.heal
 import src.web_server.lib.hallway.entities.spells.spear
 import src.web_server.lib.hallway.entities.spells.modifiers
 import src.web_server.lib.hallway.entities.spells.axe
+import src.web_server.lib.hallway.entities.spells.force
 
 available_cards = {cls.card.name: cls.card for cls in SpellEntity.__subclasses__()}
 
-print(available_cards)
+print(available_cards.keys())

@@ -29,6 +29,20 @@ class Phases(Enum):
     STARTED = 1
 
 
+# class State(Enum):
+#     PROCESSING_PLAYER_TURN = 0
+#     PROCESSING_PLAYER_ENTITIES = 1
+#     PROCESSING_ENEMY_TURN = 2
+#     PROCESSING_ENEMY_ENTITIES = 3
+
+
+class Turns:
+    PLAYER = 0
+    ALLY_ENTITY = 1
+    ENEMY = 2
+    ENEMY_ENTITY = 3
+
+
 class HallwayHunters:
     def __init__(self, room_id, username):
         self.removed_entity_ids: List[str] = []
@@ -44,7 +58,8 @@ class HallwayHunters:
         self.generator = Generator(self.size)
         self.room_centers: List[Point] = []
         self.board: List[List[tiles.Tile]] = []
-        self.entities: List[Entity] = []
+        self.allied_entities: List[Entity] = []
+        self.enemy_entities: List[Entity] = []
 
         # Generate this to send to every player initially
         self.initial_board_json = [[tiles.UnknownTile().to_json() for _ in range(self.size)] for _ in range(self.size)]
@@ -53,7 +68,7 @@ class HallwayHunters:
         self.spent_time = 0.00001
         self.ticks = 0
         self.processing_entities = False
-        self.turn = 0
+        self._turn = 0
         self.finished = False
 
         self.game_loop_thread = threading.Thread(target=self.game_loop)
@@ -69,7 +84,7 @@ class HallwayHunters:
         for point in points:
             spawner = EntitySpawner(self, Slime)
             spawner.position = point
-            self.entities.append(spawner)
+            self.enemy_entities.append(spawner)
             self.board[point.x][point.y - 1] = tiles.TotemTopLeft()
             self.board[point.x][point.y] = tiles.TotemMidLeft()
             self.board[point.x][point.y + 1] = tiles.TotemBotLeft()
@@ -88,7 +103,9 @@ class HallwayHunters:
         spawn_point = random.choice(self.room_centers)
 
         # Generate keys and door entities
-        self.entities.clear()
+        self.enemy_entities.clear()
+        self.allied_entities.clear()
+
         # entities = self.generator.generate_keys(spawn_point)
         # self.add_entities(entities)
 
@@ -112,7 +129,7 @@ class HallwayHunters:
         enemy.change_position(spawn_point + spawn_point_modifier[-2])
         self.spawn_enemy(enemy)
 
-        self.turn = 0
+        self._turn = 0
 
         # Connect chest to player
         chest = tiles.ChestTile(self.player_list[0])
@@ -151,49 +168,24 @@ class HallwayHunters:
             self.game_lock.wait()
             self.game_lock.release()
 
-    def process_entities(self):
-        """
-        Process all entities, returns False if nothing else needs to be done.
-        :return:
-        """
-        movable_entities = [entity for entity in self.entities if
-                            isinstance(entity, MovableEntity) and not isinstance(entity, EnemyClass)]
-        for entity in movable_entities:
-            if entity.movement_timer == 0:
-                try:
-                    entity.movement_action()
-                except InvalidAction as e:
-                    pass
-
-        # Check if everybody has finished their movement
-        for entity in movable_entities:
-            if len(entity.movement_queue) != 0 or entity.movement_timer != 0:
-                return True
-
-        for entity in movable_entities:
-            entity.post_movement_action()
-
-        self.entities = [entity for entity in self.entities if entity.alive]
-        return False
 
     def process_player_turn(self):
+        # Check if players are each ready with their queued actions
         for player in self.player_list:
             if player.action_state == PlayerState.NOT_READY:
                 return
+
+        # Set player state to processing and activate their prepared movement
         for player in self.player_list:
             player.action_state = PlayerState.PROCESSING
+            player.movement_queue.extend(player.prepared_movement_queue)
+            player.prepared_movement_queue.clear()
 
-        # Everybody is ready, process all movement actions, followed by actions
-        for player in self.player_list:
-            if player.movement_timer == 0:
-                try:
-                    player.movement_action()
-                except InvalidAction:
-                    pass
-
-        # Check if everybody has finished their movement
+        # Check if everybody has finished their movement and spells
         for player in self.player_list:
             if len(player.movement_queue) != 0 or player.movement_timer != 0:
+                return
+            if len(player.entities) != 0:
                 return
 
         # If all movement has been processed, process all queued spells
@@ -204,45 +196,51 @@ class HallwayHunters:
 
         self.increment_turn()
 
-    def process_enemy_turn(self):
-        enemies = [entity for entity in self.entities if isinstance(entity, EnemyClass)]
-        for enemy in enemies:
-            if enemy.movement_timer == 0:
+    def process_entity_turn(self, entities):
+        # Do movement and update player line of sight
+        for entity in entities:
+            if entity.movement_timer == 0:
                 try:
-                    enemy.movement_action()
-
-                    self.updated_line_of_sight = True
+                    entity.movement_action()
                 except InvalidAction:
                     pass
-        for enemy in enemies:
-            if len(enemy.movement_queue) != 0 or enemy.movement_timer != 0:
+
+        # Are all entities done moving?
+        for entity in entities:
+            if len(entity.movement_queue) != 0 or entity.movement_timer != 0:
                 return
 
-        # If all movement has been processed, process all queued spells
-        for enemy in enemies:
-            # Do end-of-turn stat updates and allow for new inputs.
-            enemy.post_movement_action()
+        # Do end-of-turn stat updates and allow for post-processing
+        for entity in entities:
+            entity.post_movement_action()
 
         self.increment_turn()
 
     def tick(self):
         # Resolve entities
-        for entity in self.entities:
+        for entity in self.allied_entities:
+            entity.tick()
+        for entity in self.enemy_entities:
             entity.tick()
         for player in self.player_list:
             player.tick()
 
-        # Resolve entities in progress
-        if self.processing_entities:
-            self.processing_entities = self.process_entities()
         # Player turn
-        elif self.turn % 2 == 0:
-            # If all players are ready, we can stop this preparation and go to next turn
+        if self.to_move() == Turns.PLAYER:
             self.process_player_turn()
-
+        # Allied entity turns (e.g., spells)
+        elif self.to_move() == Turns.ALLY_ENTITY:
+            self.process_entity_turn(self.allied_entities)
         # Enemy turn
+        elif self.to_move() == Turns.ENEMY:
+            self.process_entity_turn([
+                entity for entity in self.enemy_entities if isinstance(entity, EnemyClass)
+            ])
+        # Enemy entity turn (e.g., spawners)
         else:
-            self.process_enemy_turn()
+            self.process_entity_turn([
+                entity for entity in self.enemy_entities if not isinstance(entity, EnemyClass)
+            ])
 
         # Update the player of all changes that occurred
         self.update_players()
@@ -295,7 +293,7 @@ class HallwayHunters:
             # Share visible enemies too user
             visible_entities = []
             for tile in visible_tiles:
-                for entity in self.entities:
+                for entity in self.enemy_entities + self.allied_entities:
                     if entity.position == tile:
                         visible_entities.append(entity)
 
@@ -381,27 +379,42 @@ class HallwayHunters:
 
     @timing
     def increment_turn(self):
-        self.turn += 1
+        self._turn += 1
         self.processing_entities = True
-        if self.turn % 2 == 1:
+        if self.to_move() == Turns.ENEMY:
             # We just started an enemy turn, prepare all movement for the enemies
-            for enemy in [entity for entity in self.entities if isinstance(entity, MovableEntity)]:
+            for enemy in [entity for entity in self.enemy_entities if isinstance(entity, EnemyClass)]:
                 enemy.prepare_movement()
 
     def get_entities_at(self, position):
         all_entities = []
-        all_entities.extend([x for x in self.player_list if x.position == position])
-        all_entities.extend([x for x in self.entities if x.position == position])
+        all_entities.extend(
+            [x for x in (
+                    self.player_list +
+                    self.allied_entities +  # noqa
+                    self.enemy_entities)
+             if x.position == position]
+        )
         return all_entities
 
-    def add_entities(self, entities):
-        for entity in entities:
-            entity.game = self
-        self.entities.extend(entities)
-
     def remove_entity(self, entity):
-        self.entities.remove(entity)
+        print("Removing entity", entity)
+        if entity in self.enemy_entities:
+            self.enemy_entities.remove(entity)
+        else:
+            self.allied_entities.remove(entity)
+
         self.removed_entity_ids.append(entity.uid)
 
     def spawn_enemy(self, enemy):
-        self.entities.append(enemy)
+        self.enemy_entities.append(enemy)
+
+    def to_move(self):
+        return self._turn % 4
+
+    def add_ally_entities(self, entities):
+        for entity in entities:
+            entity.game = self
+        self.allied_entities.extend(entities)
+
+        print(self.allied_entities)

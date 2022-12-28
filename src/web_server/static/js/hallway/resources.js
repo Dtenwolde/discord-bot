@@ -183,6 +183,15 @@ export class TileSet {
             this.tiles["spear_90_" + i] = rotateImageData(context, data, 90);
             this.tiles["spear_180_" + i] = rotateImageData(context, data, 180);
         }
+        // Force spell
+        for (let i = 0; i < 2; i++) {
+            let data = context.getImageData((19 + i) * S, 15 * S, S, S);
+            this.tiles["force_90_" + i] = data;
+            this.tiles["force_180_" + i] = rotateImageData(context, data, 0);
+            this.tiles["force_270_" + i] = rotateImageData(context, data, 90);
+            this.tiles["force_0_" + i] = rotateImageData(context, data, 180);
+        }
+
         // Axe animation is a rotation
         for (let i = 0; i < 4; i++) {
             this.tiles["axe_270_" + i] = context.getImageData((21 + i) * S, 12 * S, S, S);

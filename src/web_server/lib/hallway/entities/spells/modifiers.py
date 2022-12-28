@@ -4,7 +4,7 @@ from src.web_server.lib.hallway.entities.spells import SpellEntity
 from src.web_server.lib.hallway.entities.spells.card import Card
 
 
-class AngerSpell(SpellEntity):
+class Anger(SpellEntity):
     card = Card(
         name="anger",
         description="This will increase your spells' damage by 3 for 4 turns",
@@ -13,7 +13,7 @@ class AngerSpell(SpellEntity):
         mana_cost=3,
         damage=3,
         damage_type="heal",
-        class_name="AngerSpell"
+        class_name="Anger"
     )
 
     def __init__(self, player):
@@ -29,12 +29,13 @@ class AngerSpell(SpellEntity):
         self.animating = True
         self.loop = False
 
-        passive = Passive(player, 4, "Anger")
+        passive = Passive(player, time=4, name="Anger")
         passive.mods.dma = self.card.damage
 
         player.passives.append(passive)
 
-class SharpenSpell(SpellEntity):
+
+class Sharpen(SpellEntity):
     card = Card(
         name="sharpen",
         description="Sharpen your tools. Multiply piercing damage by 2 for 5 turns.",
@@ -43,7 +44,7 @@ class SharpenSpell(SpellEntity):
         mana_cost=3,
         damage=0,
         damage_type="heal",
-        class_name="SharpenSpell"
+        class_name="Sharpen"
     )
 
     def __init__(self, player):
@@ -59,7 +60,7 @@ class SharpenSpell(SpellEntity):
         self.animating = True
         self.loop = False
 
-        passive = Passive(player, 5, "Sharpen")
+        passive = Passive(player, time=5, name="Sharpen")
         passive.mods.dmm = 2
         passive.mods.dm_restriction = "prc"
 

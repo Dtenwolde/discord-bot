@@ -28,7 +28,7 @@ class Card:
         self.damage_type = damage_type
         self.class_name = class_name
 
-    def create_object(self, player):
+    def create_objects(self, player):
         # Import this to ensure we have loaded all spells
         from src.web_server.lib.hallway.entities.spells.spell import SpellEntity
         cls = None  # noqa

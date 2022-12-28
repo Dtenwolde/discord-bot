@@ -4,11 +4,14 @@ from src.web_server.lib.hallway.entities.entity import EntityAnimationFrames
 
 
 class Sloth(EnemyClass):
+
     def __init__(self, game):
         super().__init__("sloth", game)
         self.hp = 2
+        self.movement_cooldown = self.BASE_MOVEMENT
+
+        self.BASE_MOVEMENT = 25
         self.MAX_MOVEMENT = 3
-        self.movement_cooldown = 25
 
         # Set right and up animation frames
         idle_ru = [f"sloth_{i}" for i in range(2)]

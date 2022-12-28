@@ -6,11 +6,11 @@ from src.web_server.lib.hallway.exceptions import InvalidAction
 
 
 class MovableEntity(Entity):
-    MAX_MOVEMENT = 10
-
     def __init__(self, game, unique_identifier=None):
         super().__init__(game, unique_identifier)
         self.can_move = True
+
+        self.MAX_MOVEMENT = 10
 
         self.movement_cooldown = 2  # Ticks
         self.movement_timer = 0
@@ -18,6 +18,12 @@ class MovableEntity(Entity):
         self.moving = False
 
         self.direction = EntityDirections.DOWN
+
+    def die(self):
+        super().die()
+        self.movement_queue = []
+        self.moving = False
+        self.movement_timer = 0
 
     def start(self):
         self.movement_timer = 0
@@ -46,7 +52,13 @@ class MovableEntity(Entity):
                     self.animating = True
 
         super().tick()
+
         self.movement_timer = max(0, self.movement_timer - 1)
+        if self.movement_timer == 0 and len(self.movement_queue) > 0:
+            try:
+                self.movement_action()
+            except InvalidAction as e:
+                pass
 
     def post_movement_action(self):
         if self.animation_frames is not None:

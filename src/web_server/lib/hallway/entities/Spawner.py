@@ -19,7 +19,7 @@ class EntitySpawner(MovableEntity):
         return True
 
     def post_movement_action(self):
-        if len(self.game.enemies) > 20 or self.game.turn % 2 == 1:
+        if len(self.game.enemies) > 20 or self.game._turn % 2 == 1:
             return
 
         enemy = self.to_spawn(self.game, **self.kwargs)

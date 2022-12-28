@@ -62,14 +62,12 @@ class PlayerClass(MovableEntity):
         self.position = Point(1, 1)
         self.last_position = self.position
         self.class_name = None
+        self.entities = []
 
         self.dead = False
         self.can_move = True
 
         self.movement_cooldown = 8  # Ticks
-        self.movement_timer = 0
-        self.movement_queue = []
-        self.moving = False
 
         self.action_state = PlayerState.PREPARING_GAME
         self.direction = EntityDirections.DOWN
@@ -101,6 +99,7 @@ class PlayerClass(MovableEntity):
         self.deck.emit_deck()
 
         self.queued_spell_idx = None
+        self.prepared_movement_queue = []
 
         # Inventory
         self.inventory = []
@@ -129,14 +128,14 @@ class PlayerClass(MovableEntity):
         self.deck.start()
 
     def die(self):
+        super().die()
         self.passives = []
         self.dead = True
         self.can_move = False
         self.queued_spell_idx = None
 
         self.drop_item()
-        self.movement_queue.clear()
-        self.movement_timer = 0
+        self.prepared_movement_queue.clear()
         self.game.broadcast("%s died" % self.username)
 
     def tick(self):
@@ -206,16 +205,16 @@ class PlayerClass(MovableEntity):
             return
 
         # Remove the last move from the stack if moving in the opposite direction
-        if len(self.movement_queue) > 0 and \
-                ((self.movement_queue[-1].x == -move.x and move.x != 0) or
-                 (self.movement_queue[-1].y == -move.y and move.y != 0)):
-            self.movement_queue.pop(-1)
+        if len(self.prepared_movement_queue) > 0 and \
+                ((self.prepared_movement_queue[-1].x == -move.x and move.x != 0) or
+                 (self.prepared_movement_queue[-1].y == -move.y and move.y != 0)):
+            self.prepared_movement_queue.pop(-1)
             return
 
-        if len(self.movement_queue) == self.MAX_MOVEMENT:
+        if len(self.prepared_movement_queue) == self.MAX_MOVEMENT:
             return
 
-        self.movement_queue.append(move)
+        self.prepared_movement_queue.append(move)
 
     def to_json(self):
         state = super().to_json()
@@ -231,7 +230,7 @@ class PlayerClass(MovableEntity):
             "max_mana": self.mana.max,
             "item": self.item.to_json() if self.item else None,
             "hand": [],
-            "movement_queue": [move.to_json() for move in self.movement_queue],
+            "movement_queue": [move.to_json() for move in self.prepared_movement_queue],
             "class_name": self.class_name,
         })
         return state
@@ -322,9 +321,10 @@ class PlayerClass(MovableEntity):
         spell = available_cards[spell_name]
         self.mana -= spell.mana_cost
 
-        spell_object = spell.create_object(player=self)
+        spell_object = spell.create_objects(player=self)
         spell_object: SpellEntity
 
+        # Apply damage modifiers to spell
         for passive in self.passives:
             spell_object.card.damage = passive.damage_mod_multiplicative(
                 spell_object.card.damage,
@@ -337,7 +337,8 @@ class PlayerClass(MovableEntity):
                 spell_object.card.damage_type
             )
 
-        self.game.entities.append(spell_object)
+        # Add spell object to game entities
+        self.game.add_ally_entities(spell_object.entities)
 
         self.queued_spell_idx = None
 

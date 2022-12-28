@@ -11,6 +11,8 @@ class EnemyClass(MovableEntity):
     def __init__(self, sprite_name: str, game):
         super().__init__(game)
         self.MAX_MOVEMENT = 6
+        self.BASE_MOVEMENT = 10
+
         self.sprite_name = sprite_name
         self.spawn_position = Point(1, 1)
         self.position = Point(1, 1)
@@ -22,7 +24,7 @@ class EnemyClass(MovableEntity):
 
         self.updated = True
 
-        self.movement_cooldown = 10  # Ticks
+        self.movement_cooldown = self.BASE_MOVEMENT  # Ticks
         self.movement_timer = 0
         self.movement_queue = []
         self.moving = False
@@ -79,3 +81,4 @@ class EnemyClass(MovableEntity):
 
         path = pathfinding.astar(self.game.board, self.position, self.game.player_list[0].position)
         self.movement_queue = path[:self.MAX_MOVEMENT]
+        self.movement_cooldown = self.BASE_MOVEMENT
