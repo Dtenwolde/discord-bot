@@ -7,6 +7,7 @@ from src.web_server.lib.hallway.Utils import Point, EntityDirections, line_of_si
 from src.web_server.lib.hallway.cards.deck import Deck
 from src.web_server.lib.hallway.entities.Passive import Passive
 from src.web_server.lib.hallway.entities.enemies.Slime import EnemyClass
+from src.web_server.lib.hallway.entities.entity import EntityStat, HPStat
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 from src.web_server.lib.hallway.entities.spells import available_cards, SpellEntity
 from src.web_server.lib.hallway.exceptions import InvalidAction
@@ -22,33 +23,6 @@ class PlayerState:
     NOT_READY = 2
     PREPARING_GAME = 3
     READY_FOR_GAME = 4
-
-
-class PlayerStat(object):
-    def __init__(self, current, total):
-        self.max = total
-        self.current = current
-        super().__init__()
-
-    def __add__(self, other):
-        if isinstance(other, int):
-            return PlayerStat(min(self.current + other, self.max), self.max)
-
-    def __sub__(self, other):
-        if isinstance(other, int):
-            return PlayerStat(max(self.current - other, 0), self.max)
-
-    def __lt__(self, other):
-        if isinstance(other, int):
-            return self.current < other
-
-    def __le__(self, other):
-        if isinstance(other, int):
-            return self.current <= other
-
-    def __ge__(self, other):
-        if isinstance(other, int):
-            return self.current >= other
 
 
 class PlayerClass(MovableEntity):
@@ -91,8 +65,8 @@ class PlayerClass(MovableEntity):
         self.mana_regen = 1
 
         # Active stats
-        self.hp = PlayerStat(10, 15)
-        self.mana = PlayerStat(5, 10)
+        self.hp = HPStat(10, 15, self)
+        self.mana = EntityStat(5, 10)
 
         # Cards to play
         self.deck = Deck(self)
@@ -104,7 +78,7 @@ class PlayerClass(MovableEntity):
         # Inventory
         self.inventory = []
 
-    def prepare_movement(self):
+    def before_turn_action(self):
         pass
 
     def toggle_ready(self):
@@ -165,8 +139,6 @@ class PlayerClass(MovableEntity):
         if isinstance(other, EnemyClass):
             other: EnemyClass
             self.hp -= other.damage
-            if self.hp <= 0:
-                self.die()
 
         return other.can_move_through
 
@@ -355,8 +327,6 @@ class PlayerClass(MovableEntity):
 
     def damage(self, damage):
         self.hp -= damage
-        if self.hp <= 0:
-            self.die()
 
 
 class Demolisher(PlayerClass):

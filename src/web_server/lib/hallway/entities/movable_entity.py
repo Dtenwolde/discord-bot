@@ -1,11 +1,11 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 
 from src.web_server.lib.hallway.Utils import EntityDirections, direction_to_point
 from src.web_server.lib.hallway.entities.entity import Entity, EntityAnimationFrames
 from src.web_server.lib.hallway.exceptions import InvalidAction
 
 
-class MovableEntity(Entity):
+class MovableEntity(Entity, metaclass=ABCMeta):
     def __init__(self, game, unique_identifier=None):
         super().__init__(game, unique_identifier)
         self.can_move = True
@@ -95,6 +95,9 @@ class MovableEntity(Entity):
             self.direction = EntityDirections.DOWN
         elif move.y == -1:
             self.direction = EntityDirections.UP
+        else:
+            self.moving = False
+            self.direction = None
 
         # Compute temporary position based on next move
         new_position = move + self.position
@@ -105,9 +108,11 @@ class MovableEntity(Entity):
             self.moving = False
             raise InvalidAction("You cannot move out of bounds.")
 
+        self.movement_timer = self.movement_cooldown
         tile = self.game.board[new_position.x][new_position.y]
         if not tile.movement_allowed:
             self.moving = False
+            self.direction = None
             raise InvalidAction("You cannot move on this tile.")
 
         can_move_through = True
@@ -121,10 +126,11 @@ class MovableEntity(Entity):
         self.moving = self.can_move_through
         if can_move_through:
             # Reset the movement timer
-            self.movement_timer = self.movement_cooldown
             self.position = new_position
             return move
 
+        self.moving = False
+        self.direction = None
         raise InvalidAction("An entity is preventing you from moving to this tile.")
 
     def get_interpolated_position(self):
@@ -144,7 +150,3 @@ class MovableEntity(Entity):
             "moving": self.moving,
         })
         return state
-
-    @abstractmethod
-    def prepare_movement(self):
-        pass

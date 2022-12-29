@@ -3,7 +3,8 @@ from flask import request
 from src.web_server import session_user, sio, timing
 from src.web_server.lib.hallway.commands import handle_developer_command
 from src.web_server.lib.hallway.exceptions import InvalidAction, InvalidCommand
-from src.web_server.lib.hallway.hallway_hunters import Phases, games
+from src.web_server.lib.hallway.hallway_hunters import games
+from src.web_server.lib.hallway.Utils import Phases
 
 
 @sio.on("game_state", namespace="/hallway")

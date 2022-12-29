@@ -10,15 +10,17 @@ class PassiveModifiers(object):
         self.hp_regen = 0
         self.temp_hp = 0
 
+    def __repr__(self):
+        return str(vars(self))
+
 
 class Passive(object):
-    def __init__(self, player, time, name="", callback=None, args=()):
-        from src.web_server.lib.hallway.entities.player_class import PlayerClass
+    def __init__(self, entity, time, name="", callback=None, args=()):
         self.uid = str(uuid.uuid4())
         self.name = name
         self.total_time = time
         self.time = time
-        self.player: PlayerClass = player
+        self.entity = entity
 
         self.callback = callback
         self.args = args
@@ -26,8 +28,12 @@ class Passive(object):
         self.mods = PassiveModifiers()
 
     def tick(self):
-        self.player.mana += self.mods.mana_regen
-        self.player.hp += self.mods.hp_regen
+        from src.web_server.lib.hallway.entities.enemies import EnemyClass
+        from src.web_server.lib.hallway.entities.player_class import PlayerClass
+
+        if isinstance(self.entity, PlayerClass) or isinstance(self.entity, EnemyClass):
+            self.entity.mana += self.mods.mana_regen
+            self.entity.hp += self.mods.hp_regen
 
         self.time -= 1
         if self.time == 0:
@@ -59,6 +65,6 @@ class Passive(object):
 
 
 class HPRegeneration(Passive):
-    def __init__(self, player, time, regen_mod):
-        super().__init__(player, time, "HP Regen")
+    def __init__(self, entity, time, regen_mod):
+        super().__init__(entity, time, "HP Regen")
         self.mods.hp_regen = regen_mod

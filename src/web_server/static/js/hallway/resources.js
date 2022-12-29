@@ -34,6 +34,16 @@ export class TileSet {
     constructor() {
     }
 
+    create360Rotated(context, data, name, i) {
+        /*
+         * Creates rotated sprites, assumes the initial image is facing rightwards
+         */
+        this.tiles[`${name}_90_${i}`] = data;
+        this.tiles[`${name}_180_${i}`] = rotateImageData(context, data, 0);
+        this.tiles[`${name}_270_${i}`] = rotateImageData(context, data, 90);
+        this.tiles[`${name}_0_${i}`] = rotateImageData(context, data, 180);
+    }
+
     tiles = {};
 
     splitTileset(tileSet) {
@@ -178,18 +188,27 @@ export class TileSet {
         // Load all spells into the tiles object
         for (let i = 0; i < 2; i++) {
             let data = context.getImageData((19 + i) * S, 12 * S, S, S);
-            this.tiles["spear_270_" + i] = data;
-            this.tiles["spear_0_" + i] = rotateImageData(context, data, 0);
-            this.tiles["spear_90_" + i] = rotateImageData(context, data, 90);
-            this.tiles["spear_180_" + i] = rotateImageData(context, data, 180);
+            this.create360Rotated(context, data, "spear", i);
         }
         // Force spell
         for (let i = 0; i < 2; i++) {
             let data = context.getImageData((19 + i) * S, 15 * S, S, S);
-            this.tiles["force_90_" + i] = data;
-            this.tiles["force_180_" + i] = rotateImageData(context, data, 0);
-            this.tiles["force_270_" + i] = rotateImageData(context, data, 90);
-            this.tiles["force_0_" + i] = rotateImageData(context, data, 180);
+            this.create360Rotated(context, data, "force", i);
+        }
+
+        // Poison dart
+        let data = context.getImageData(21 * S, 15 * S, S, S)
+        this.create360Rotated(context, data, "poisondart", 0);
+
+        // Boomerang
+        for (let i = 0; i < 2; i++) {
+            let data = context.getImageData((22 + i) * S, 15 * S, S, S);
+            this.create360Rotated(context, data, "boomerang", i);
+        }
+        // Fireball
+        for (let i = 0; i < 5; i++) {
+            let data = context.getImageData((22 + i) * S, 17 * S, S, S);
+            this.create360Rotated(context, data, "fireball", i);
         }
 
         // Axe animation is a rotation

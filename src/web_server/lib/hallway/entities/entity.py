@@ -38,6 +38,67 @@ class SimpleEntityAnimationFrames:
         return self.frames
 
 
+def clamp(value, lo, hi):
+    return max(lo, min(hi, value))
+
+
+class EntityStat(object):
+    def __init__(self, current, total):
+        super().__init__()
+        self.max = total
+        self.current = current
+
+    def __add__(self, other):
+        if isinstance(other, int):
+            return EntityStat(clamp(self.current + other, 0, self.max), self.max)
+        raise NotImplemented("Err")
+
+    def __sub__(self, other):
+        if isinstance(other, int):
+            return EntityStat(clamp(self.current - other, 0, self.max), self.max)
+        raise NotImplemented("Err")
+
+    def __lt__(self, other):
+        if isinstance(other, int):
+            return self.current < other
+        raise NotImplemented("Err")
+
+    def __le__(self, other):
+        if isinstance(other, int):
+            return self.current <= other
+        raise NotImplemented("Err")
+
+    def __ge__(self, other):
+        if isinstance(other, int):
+            return self.current >= other
+        raise NotImplemented("Err")
+
+    def __repr__(self):
+        return f"{self.current}/{self.max}"
+
+    def set_max(self, new_max):
+        self.max = new_max
+        self.current = new_max
+
+
+class HPStat(EntityStat):
+    def __init__(self, current, total, entity):
+        super().__init__(current, total)
+        self.entity = entity
+
+    def __sub__(self, other):
+        value = super().__sub__(other)
+        if value.current <= 0:
+            self.entity.die()
+        return HPStat(value.current, value.max, self.entity)
+
+    def __add__(self, other):
+        value = super().__add__(other)
+        if value.current <= 0:
+            self.entity.die()
+        return HPStat(value.current, value.max, self.entity)
+
+
 class Entity:
     """
     A generic entity class.
@@ -158,3 +219,6 @@ class Entity:
         """
         self.alive = False
         self.game.remove_entity(self)
+
+    def before_turn_action(self):
+        pass

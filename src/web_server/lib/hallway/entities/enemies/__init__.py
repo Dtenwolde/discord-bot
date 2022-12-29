@@ -3,6 +3,7 @@ from typing import List
 from src.web_server.lib.hallway.Utils import Point, EntityDirections
 from src.web_server.lib.hallway.algorithms import pathfinding
 from src.web_server.lib.hallway.entities.Passive import Passive
+from src.web_server.lib.hallway.entities.entity import EntityStat, HPStat
 from src.web_server.lib.hallway.entities.spells.spell import SpellEntity
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 
@@ -38,15 +39,14 @@ class EnemyClass(MovableEntity):
 
         # Fixed stats
         self.damage = 2
-        self.hp = 1
+        self.hp = HPStat(1, 1, self)
+        self.mana = EntityStat(0, 0)
 
     def collide(self, other):
         if isinstance(other, SpellEntity):
             other: SpellEntity
             if other.card.damage_type != "heal":
                 self.hp -= other.card.damage
-            if self.hp <= 0:
-                self.die()
 
         return other.can_move_through
 
@@ -63,11 +63,6 @@ class EnemyClass(MovableEntity):
     def tick(self):
         super().tick()
 
-        for passive in self.passives[:]:
-            passive.tick()
-            if passive.time == 0:
-                self.passives.remove(passive)
-
     def to_json(self):
         state = super().to_json()
         state.update({
@@ -75,7 +70,16 @@ class EnemyClass(MovableEntity):
         })
         return state
 
-    def prepare_movement(self):
+    def post_movement_action(self):
+        super().post_movement_action()
+
+        # Apply passive timing
+        for passive in self.passives[:]:
+            passive.tick()
+            if passive.time == 0:
+                self.passives.remove(passive)
+
+    def before_turn_action(self):
         if self.dead:
             return
 

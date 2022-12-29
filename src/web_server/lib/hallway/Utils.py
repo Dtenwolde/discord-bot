@@ -133,3 +133,15 @@ def point_interpolator(point1: Point, point2: Point, n_steps=20):
         last = current
 
         tracker += step
+
+
+class Turns:
+    PLAYER = 0
+    ALLY_ENTITY = 1
+    ENEMY = 2
+    ENEMY_ENTITY = 3
+
+
+class Phases(Enum):
+    NOT_YET_STARTED = 0
+    STARTED = 1

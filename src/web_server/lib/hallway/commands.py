@@ -1,6 +1,5 @@
 from src.database.repository import profile_repository
-from src.web_server.lib.hallway.hallway_hunters import Phases
-from src.web_server.lib.hallway.Utils import Point
+from src.web_server.lib.hallway.Utils import Point, Phases
 from src.web_server.lib.hallway.exceptions import InvalidCommand
 
 
@@ -30,6 +29,7 @@ def teleport_command(text_message, player, game):
             raise InvalidCommand("You cannot teleport outside the game")
     else:
         raise InvalidCommand("The teleport command requires an x and y coordinate")
+
 
 def restart_command(game, player):
     if player.username == game.author:

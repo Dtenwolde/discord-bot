@@ -20,9 +20,8 @@ class SpellEntity(MovableEntity):
         waiting_ticks = max(0, animation_length - len(self.movement_queue))
         self.movement_queue.extend([Point(0, 0)] * waiting_ticks)
         self.entities = [self]
-        self.death_callback = None
 
-    def prepare_movement(self):
+    def before_turn_action(self):
         pass
 
     def collide(self, other: Entity) -> bool:

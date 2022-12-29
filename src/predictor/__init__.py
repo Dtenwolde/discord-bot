@@ -72,7 +72,7 @@ def prepare_predict_data(all_data, blue_team="Fnatic", red_team="Rogue"):
     for team in [blue_team, red_team]:
         players = all_data.query(f"team=='{team}'").filter(["player"]).head(5)
 
-        for player in players.player.values:
+        for player in players.entity.values:
             new_player_data = (
                 all_data
                     .filter(PLAYER_COLUMNS)

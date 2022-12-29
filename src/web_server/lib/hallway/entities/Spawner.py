@@ -12,7 +12,7 @@ class EntitySpawner(MovableEntity):
         self.to_spawn = entity
         self.kwargs = kwargs
 
-    def prepare_movement(self):
+    def before_turn_action(self):
         pass
 
     def collide(self, other: Entity) -> bool:

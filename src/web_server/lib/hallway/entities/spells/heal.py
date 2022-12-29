@@ -13,7 +13,7 @@ class Heal(SpellEntity):
         mana_cost=3,
         damage=5,
         damage_type="heal",
-        class_name="HealSpell"
+        class_name="Heal"
     )
 
     def __init__(self, player):

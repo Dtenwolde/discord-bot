@@ -7,7 +7,7 @@ class Sloth(EnemyClass):
 
     def __init__(self, game):
         super().__init__("sloth", game)
-        self.hp = 2
+        self.hp.set_max(2)
         self.movement_cooldown = self.BASE_MOVEMENT
 
         self.BASE_MOVEMENT = 25

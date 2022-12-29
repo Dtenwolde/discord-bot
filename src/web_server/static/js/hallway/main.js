@@ -364,6 +364,11 @@ function updateScoreboard() {
 
 function postStartInitialize(data) {
     updateScoreboard();
+
+    tileView.setOnScroll(canvas, (e) => {
+        tileView.zoom += Math.sign(e.deltaY) * -0.5;
+        tileView.zoom = Math.max(Math.min(tileView.zoom, 4), 1)
+    });
 }
 
 let intervalID;
@@ -468,10 +473,6 @@ function initialize(tileSet) {
         }
     });
 
-    tileView.setOnScroll(canvas, (e) => {
-        tileView.zoom += Math.sign(e.deltaY) * -0.5;
-        tileView.zoom = Math.max(Math.min(tileView.zoom, 4), 1)
-    });
 }
 
 function sendAction(action) {

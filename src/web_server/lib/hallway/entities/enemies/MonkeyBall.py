@@ -7,7 +7,7 @@ class MonkeyBall(EnemyClass):
 
     def __init__(self, game):
         super().__init__("monkeyball", game)
-        self.hp = 2
+        self.hp.set_max(2)
 
         self.MAX_MOVEMENT = 10
         self.BASE_MOVEMENT = 10
