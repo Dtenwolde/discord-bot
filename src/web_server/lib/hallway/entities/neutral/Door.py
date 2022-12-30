@@ -1,5 +1,5 @@
 from src.web_server.lib.hallway.entities.player_class import PlayerClass
-from src.web_server.lib.hallway.entities.entity import Entity
+from src.web_server.lib.hallway.entities.entity import Entity, SimpleEntityAnimationFrames
 
 
 class Key(Entity):
@@ -8,12 +8,12 @@ class Key(Entity):
         self.picked_up = False
         self.can_move_through = True
 
-        self.animation_sprite_names = (
+        self.animation_frames = SimpleEntityAnimationFrames(
                 (["key_0"] * 3 + ["key_1"] * 3) * 4 +
                 (["key_0"] * 3 + ["key_2", "key_3", "key_2"])
         )
         self.frame_duration = 5
-        self.sprite_name = self.animation_sprite_names[0]
+        self.sprite_name = self.animation_frames.get_animation_frames()[0]
         self.animating = True
         self.loop = True
 
@@ -35,10 +35,10 @@ class Door(Entity):
         self._key = Key(game)
         self.key_gotten = False
 
-        self.animation_sprite_names = [
+        self.animation_frames = SimpleEntityAnimationFrames([
             f"door_{orientation[0]}_{i}" for i in range(4)
-        ]
-        self.sprite_name = self.animation_sprite_names[0]
+        ])
+        self.sprite_name = self.animation_frames.get_animation_frames()[0]
 
         self.opening = False
 

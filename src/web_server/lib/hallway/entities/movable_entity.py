@@ -112,7 +112,6 @@ class MovableEntity(Entity, metaclass=ABCMeta):
         tile = self.game.board[new_position.x][new_position.y]
         if not tile.movement_allowed:
             self.moving = False
-            self.direction = None
             raise InvalidAction("You cannot move on this tile.")
 
         can_move_through = True
@@ -130,11 +129,10 @@ class MovableEntity(Entity, metaclass=ABCMeta):
             return move
 
         self.moving = False
-        self.direction = None
         raise InvalidAction("An entity is preventing you from moving to this tile.")
 
     def get_interpolated_position(self):
-        if self.direction is None:
+        if self.direction is None or not self.moving:
             return self.position
 
         progress = self.movement_timer / self.movement_cooldown

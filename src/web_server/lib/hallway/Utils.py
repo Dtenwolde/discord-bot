@@ -49,7 +49,15 @@ class Point:
         if isinstance(other, int):
             return Point(self.x / other, self.y / other)
         else:
-            raise NotImplemented("Only multiplying with a constant is implemented.")
+            raise NotImplemented("Only dividing by a constant is implemented.")
+
+    def __floordiv__(self, other):
+        if other == 0:
+            raise ZeroDivisionError("Cannot divide by zero.")
+        if isinstance(other, int):
+            return Point(self.x // other, self.y // other)
+        else:
+            raise NotImplemented("Only dividing by a constant is implemented.")
 
     def __add__(self, other):
         if isinstance(other, Point):

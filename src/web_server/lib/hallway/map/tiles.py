@@ -217,15 +217,6 @@ class BottomLeftCornerWall(WallTile):
         self.image = "corner_bl"
 
 
-class ChestTile(Tile):
-    def __init__(self, player):
-        super().__init__()
-        self.image = "chest"
-        self.player = player
-        self.movement_allowed = False
-        self.opaque = False
-
-
 class BottomLeftCornerWall2(WallTile):
     def __init__(self):
         super().__init__()

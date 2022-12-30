@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import List, Optional, Dict
 
 from src.web_server import sio, timing
+from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 from src.web_server.lib.hallway.entities.spells import SpellEntity
 from src.web_server.lib.hallway.entities.enemies.MonkeyBall import MonkeyBall
 from src.web_server.lib.hallway.entities.enemies.Sloth import Sloth
@@ -85,8 +86,14 @@ class HallwayHunters:
         self.enemy_entities.clear()
         self.allied_entities.clear()
 
-        # entities = self.generator.generate_keys(spawn_point)
-        # self.add_entities(entities)
+        entities = self.generator.generate_keys(spawn_point)
+        self.add_enemy_entities(entities)
+
+        chests = self.generator.generate_chests(self, loot_table=(
+            [1],
+            ["teleport"]
+        ))
+        self.add_enemy_entities(chests)
 
         spawn_point_modifier = [
             Point(0, 0),
@@ -109,11 +116,6 @@ class HallwayHunters:
         self.spawn_enemy(enemy)
 
         self._turn = 0
-
-        # Connect chest to player
-        chest = tiles.ChestTile(self.player_list[0])
-        self.board[spawn_point.x][spawn_point.y + 1] = chest
-        chest.image = "chest_%s" % self.player_list[0].color
 
         self.finished = False
         self.game_lock.acquire()
@@ -174,7 +176,10 @@ class HallwayHunters:
 
         self.increment_turn()
 
-    def process_entity_turn(self, entities):
+    def process_entity_turn(self, all_entities):
+        # Only movable entities have movement_related functions
+        entities = [entity for entity in all_entities if isinstance(entity, MovableEntity)]
+
         # Are all entities done moving?
         for entity in entities:
             if len(entity.movement_queue) != 0 or entity.movement_timer != 0:
@@ -396,3 +401,8 @@ class HallwayHunters:
         for entity in entities:
             entity.game = self
         self.allied_entities.extend(entities)
+
+    def add_enemy_entities(self, entities):
+        for entity in entities:
+            entity.game = self
+        self.enemy_entities.extend(entities)

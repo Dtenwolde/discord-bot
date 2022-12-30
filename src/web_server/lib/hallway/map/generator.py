@@ -4,29 +4,34 @@ from typing import List, Tuple
 
 from src.web_server.lib.hallway.Items import RubbishItem
 from src.web_server.lib.hallway.entities.entity import Entity
+from src.web_server.lib.hallway.entities.neutral.Chest import Chest
 from src.web_server.lib.hallway.entities.neutral.Door import Door
+from src.web_server.lib.hallway.entities.spells import available_cards
+from src.web_server.lib.hallway.entities.spells.card import Card
 from src.web_server.lib.hallway.map.tiles import *
 from src.web_server.lib.hallway.Utils import Point
 
 
-def get_surrounding_points(point: Point):
+def get_surrounding_points(point: Point, scale):
     return [
-        Point(point.x + 1, point.y),
-        Point(point.x - 1, point.y),
-        Point(point.x, point.y + 1),
-        Point(point.x, point.y - 1)
+        Point(point.x + scale, point.y),
+        Point(point.x - scale, point.y),
+        Point(point.x, point.y + scale),
+        Point(point.x, point.y - scale)
     ]
 
 
-def flood_fill(base: List[List[Tile]], player_spawn_location: Point):
-    frontier = [player_spawn_location]
+def flood_fill(base: List[List[Tile]], player_spawn_location: Point, scale=3):
+    rounded_spawn_location: Point = player_spawn_location // 3 * 3
+
+    frontier = [rounded_spawn_location + Point(1, 1)]
 
     points = []
     while len(frontier) != 0:
         current = frontier.pop()
         points.append(current)
 
-        neighbours = get_surrounding_points(current)
+        neighbours = get_surrounding_points(current, scale)
         for neighbour in neighbours:
             if neighbour in points:
                 continue
@@ -65,6 +70,7 @@ class Generator:
         self.room_centers: List[Point] = []
         self.doors: List[Door] = []
         self.entities: List[Entity] = []
+        self.valid_3x3_locations: List[Point] = []
 
     def room_generator(self, size, attempts=50):
         def room_fits(_x, _y, _width, _height):
@@ -403,11 +409,13 @@ class Generator:
         n_prev_valid_locations = -1
         valid_locations = []
 
-        print(len(self.doors))
         # Keep looping until we find no more new tiles
         while len(valid_locations) != n_prev_valid_locations:
             n_prev_valid_locations = len(valid_locations)
             valid_locations = flood_fill(self.base, player_spawn_location)
+            location_modifiers = [
+                Point(x, y) for x in range(-1, 2) for y in range(-1, 2)
+            ]
 
             for door in self.doors:
                 if door.key_gotten:
@@ -415,14 +423,37 @@ class Generator:
                 if door.position in valid_locations:
                     # Get the key for this door, place it in a reachable location
                     key = door.get_key()
-                    key.position = random.choice(valid_locations)
+                    key.position = random.choice(valid_locations) + random.choice(location_modifiers)
                     self.entities.append(key)
-                    print("Generated a key for door at", key.position)
 
                     # Remove the blocked door so we can continue the floodfill
                     self.base[door.position.x][door.position.y] = FloorTile()
 
+        self.valid_3x3_locations = valid_locations
         return self.entities + self.doors
+
+    def generate_chests(self, game, n_chests=50, loot_table: Tuple[List[float], List[str]] = None):
+        location_modifiers = [
+            Point(x, y) for x in range(-1, 2) for y in range(-1, 2)
+        ]
+
+        chests = []
+        for i in range(n_chests):
+            # Generate a position we can move on, and where no entities are placed yet
+            position = random.choice(self.valid_3x3_locations) + random.choice(location_modifiers)
+            while (
+                    not self.base[position.x][position.y].movement_allowed or
+                    len(game.get_entities_at(position)) != 0
+            ):
+                position = random.choice(self.valid_3x3_locations)
+
+            chest = Chest(game)
+            chest.position = position
+            loot_name = random.choices(loot_table[1], weights=loot_table[0])[0]
+            chest.add_loot(loot_name)
+            chests.append(chest)
+
+        return chests
 
     def print(self):
         for row in self.base:
@@ -441,7 +472,7 @@ class Generator:
         self.doors.clear()
         self.entities.clear()
         self.room_centers.clear()
-        
+
         self.base = [[UnknownTile() for _ in range(generator_size)] for _ in range(generator_size)]
 
         self.room_generator(generator_size, attempts=30)
