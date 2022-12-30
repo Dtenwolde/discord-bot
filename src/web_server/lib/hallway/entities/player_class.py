@@ -291,7 +291,11 @@ class PlayerClass(MovableEntity):
 
         spell_name = self.deck.play_card(idx=self.queued_spell_idx)
         spell = available_cards[spell_name]
-        self.mana -= spell.mana_cost
+
+        # Mana cost modifiers
+        cost_modifier = sum(x.mods.spell_cost_reduction for x in self.passives)
+
+        self.mana -= (spell.mana_cost - cost_modifier)
 
         spell_object = spell.create_objects(player=self)
         spell_object: SpellEntity

@@ -9,6 +9,7 @@ class PassiveModifiers(object):
         self.mana_regen = 0
         self.hp_regen = 0
         self.temp_hp = 0
+        self.spell_cost_reduction = 0
 
     def __repr__(self):
         return str(vars(self))

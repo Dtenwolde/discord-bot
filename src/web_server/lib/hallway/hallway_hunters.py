@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import List, Optional, Dict
 
 from src.web_server import sio, timing
+from src.web_server.lib.hallway.entities.spells import SpellEntity
 from src.web_server.lib.hallway.entities.enemies.MonkeyBall import MonkeyBall
 from src.web_server.lib.hallway.entities.enemies.Sloth import Sloth
 
@@ -379,9 +380,10 @@ class HallwayHunters:
     def remove_entity(self, entity):
         if entity in self.enemy_entities:
             self.enemy_entities.remove(entity)
-        else:
+        elif entity in self.allied_entities:
             self.allied_entities.remove(entity)
-
+        else:
+            return  # Already removed this entity
         self.removed_entity_ids.append(entity.uid)
 
     def spawn_enemy(self, enemy):

@@ -205,6 +205,16 @@ export class TileSet {
             let data = context.getImageData((22 + i) * S, 15 * S, S, S);
             this.create360Rotated(context, data, "boomerang", i);
         }
+        // Magic Dart
+        for (let i = 0; i < 3; i++) {
+            let data = context.getImageData((24 + i) * S, 15 * S, S, S);
+            this.create360Rotated(context, data, "magicdart", i);
+        }
+        // Magic Missile
+        for (let i = 0; i < 3; i++) {
+            let data = context.getImageData((24 + i) * S, 14 * S, S, S);
+            this.create360Rotated(context, data, "magicmissile", i);
+        }
         // Fireball
         for (let i = 0; i < 5; i++) {
             let data = context.getImageData((22 + i) * S, 17 * S, S, S);

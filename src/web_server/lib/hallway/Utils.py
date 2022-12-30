@@ -91,7 +91,7 @@ def direction_to_point(direction: EntityDirections):
         return Point(0, 1)
     if direction is EntityDirections.LEFT:
         return Point(-1, 0)
-    raise ValueError(f"Invalid direction passed to {direction_to_point.__name__}: {direction}")
+    return Point(0, 0)
 
 
 LOS_CACHE = {}
