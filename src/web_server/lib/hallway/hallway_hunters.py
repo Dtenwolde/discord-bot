@@ -332,7 +332,7 @@ class HallwayHunters:
             "username": "SYSTEM",
             "message": message,
         }
-        sio.emit("chat message", data, room=self.room_id, namespace="/hallway")
+        sio.emit("notify", data, room=self.room_id, namespace="/hallway")
 
     def check_readies(self):
         for player in self.player_list:

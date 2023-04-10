@@ -14,7 +14,6 @@ class Axe(SpellEntity):
         damage=7,
         damage_type="prc",
         class_name="Axe"
-                   ""
     )
 
     def __init__(self, player):

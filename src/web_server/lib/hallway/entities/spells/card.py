@@ -17,7 +17,8 @@ class DamageTypes:
 
 
 class Card:
-    def __init__(self, name, description, ability_range, radius, mana_cost, damage, damage_type: str, class_name):
+    def __init__(self, name, description, ability_range, radius, mana_cost, damage, damage_type: str, class_name,
+                 tier=1):
         super().__init__()
         self.name = name
         self.description = description
@@ -27,6 +28,7 @@ class Card:
         self.damage = damage
         self.damage_type = damage_type
         self.class_name = class_name
+        self.tier = tier
 
     def create_objects(self, player):
         # Import this to ensure we have loaded all spells

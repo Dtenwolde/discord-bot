@@ -2,14 +2,11 @@ import copy
 import random
 from typing import List, Tuple
 
-from src.web_server.lib.hallway.Items import RubbishItem
+from src.web_server.lib.hallway.Utils import Point
 from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.entities.neutral.Chest import Chest
 from src.web_server.lib.hallway.entities.neutral.Door import Door
-from src.web_server.lib.hallway.entities.spells import available_cards
-from src.web_server.lib.hallway.entities.spells.card import Card
 from src.web_server.lib.hallway.map.tiles import *
-from src.web_server.lib.hallway.Utils import Point
 
 
 def get_surrounding_points(point: Point, scale):
@@ -440,7 +437,7 @@ class Generator:
         chests = []
         for i in range(n_chests):
             # Generate a position we can move on, and where no entities are placed yet
-            position = random.choice(self.valid_3x3_locations) + random.choice(location_modifiers)
+            position = random.choice(self.valid_3x3_locations)
             while (
                     not self.base[position.x][position.y].movement_allowed or
                     len(game.get_entities_at(position)) != 0

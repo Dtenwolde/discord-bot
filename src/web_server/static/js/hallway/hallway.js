@@ -1,7 +1,14 @@
 import {
     DrawableText,
     RollingAverage,
-    Point, Rectangle, ColorTile, SpriteTile, DirectionalAnimatedSpriteTile, AnimatedSpriteTile, CircularCooldown
+    Point,
+    Rectangle,
+    ColorTile,
+    SpriteTile,
+    DirectionalAnimatedSpriteTile,
+    AnimatedSpriteTile,
+    CircularCooldown,
+    FadingText
 } from "../engine/engine.js";
 import {COLORS} from "./resources.js";
 import {Card, CARDBACK_COLOR, CARDBACK_SELECTED_COLOR, DAMAGE_COLOR, Player} from "./player.js";
@@ -75,6 +82,7 @@ export class HallwayHunters {
         stateTime: new DrawableText(5, 5 + 24),
         frameTime: new DrawableText(5, 5 + 36),
     };
+    notification = new FadingText(0, 0);
     lookup = {};
     items = [];
 
@@ -305,6 +313,20 @@ export class HallwayHunters {
                 this.view.addObjects(item);
             }
         });
+    }
+
+    initializeUI() {
+        this.notification.x = this.UIView.width / 2;
+        this.notification.y = this.UIView.height / 3;
+        this.notification.centered = true;
+        this.notification.width = this.UIView.width / 2;
+        this.notification.fontSize = 36;
+        this.notification.fadeThreshold = 60 * 2;
+        this.notification.fadeTicks = 60 * 5;
+        this.notification.color = "#8bd0dc";
+        this.notification.borderColor = "#000";
+
+        this.UIView.addObjects(this.notification);
     }
 
     initializeBoard(board_size) {

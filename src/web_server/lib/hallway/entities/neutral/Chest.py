@@ -24,6 +24,7 @@ class Chest(Entity):
             self.opened = True
 
             other.deck.hand.extend(self.loot)
+            other.notify(f"You picked up: '{', '.join(self.loot)}'")
             self.loot.clear()
 
     def add_loot(self, loot):

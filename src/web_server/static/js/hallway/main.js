@@ -380,7 +380,7 @@ function start() {
     game.initializePlayers();
     game.initializeCards();
     game.initializeEnemies();
-
+    game.initializeUI();
     // Initialize player sprites
     for (let key in game.players) {
         if (game.players.hasOwnProperty(key)) {
@@ -397,7 +397,6 @@ function start() {
         game.statsText.ping,
         game.statsText.stateTime
     );
-
 
     /*
      * Register all socket.io functions to the game object.
@@ -423,6 +422,9 @@ function start() {
         }
     });
 
+    socket.on("notify", (data) => {
+        game.notification.setText(data);
+    });
 
     // Request game state on initialization.
     socket.emit("game_state", {

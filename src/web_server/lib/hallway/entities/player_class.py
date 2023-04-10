@@ -1,6 +1,7 @@
 import random
 from typing import Optional, List
 
+from src.web_server import sio
 from src.web_server.lib.hallway.Items import Item, CollectorItem
 from src.web_server.lib.hallway.Utils import Point, EntityDirections, line_of_sight_endpoints, \
     point_interpolator
@@ -121,13 +122,6 @@ class PlayerClass(MovableEntity):
 
     def movement_action(self):
         move = super().movement_action()
-
-        # Pickup item
-        ground_item = self.game.board[self.position.x][self.position.y].item
-        if ground_item is not None and self.item is None:
-            if isinstance(ground_item, CollectorItem):
-                self.item = ground_item
-                self.game.board[self.position.x][self.position.y].item = None
 
         # Update line of sight
         if self.position != self.last_position or self.direction != self.direction:
@@ -331,6 +325,11 @@ class PlayerClass(MovableEntity):
 
     def damage(self, damage):
         self.hp -= damage
+
+    def notify(self, message):
+        print("Sending notification")
+        sio.emit("notify", message, room=self.socket, namespace="/hallway")
+
 
 
 class Demolisher(PlayerClass):

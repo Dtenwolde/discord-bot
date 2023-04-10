@@ -67,6 +67,8 @@ class MovableEntity(Entity, metaclass=ABCMeta):
             self.loop = False
             self.animating = True
 
+        self.moving = False
+
     def change_position(self, point):
         self.position = point
 

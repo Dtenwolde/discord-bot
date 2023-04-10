@@ -389,6 +389,34 @@ export class DrawableText extends Point {
     }
 }
 
+export class FadingText extends DrawableText {
+    constructor(x, y) {
+        super(x, y);
+        this.fadeTicks = 0;
+        this._ticks = 0;
+        this.fadeThreshold = 1;
+    }
+
+    setText(newText) {
+        this._ticks = this.fadeTicks;
+        return super.setText(newText);
+    }
+
+    render(context) {
+        let visibility = Math.max(this._ticks / this.fadeThreshold);
+
+        if (visibility === 0) {
+            return;
+        }
+        context.save();
+        context.globalAlpha = visibility;
+        super.render(context);
+        context.restore();
+
+        this._ticks -= 1;
+    }
+}
+
 export class Button extends Rectangle {
     constructor(x, y, width, height) {
         super(x, y, width, height);
