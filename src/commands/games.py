@@ -5,7 +5,7 @@ from discord import User, Message, Reaction
 from discord.ext import commands
 from discord.ext.commands import Context
 from src.custom_emoji import CustomEmoji
-from src.database import database
+from src.database import db
 from src.database.models.models import GameRoom
 from src.database.repository import room_repository, profile_repository
 
@@ -52,7 +52,7 @@ class Games(commands.Cog):
         message = await context.channel.send(embed=embed)
         # Create new room
         room = GameRoom(title=title, author_id=profile.discord_id, type=game_type, message_id=message.id)
-        session = database.session()
+        session = db.session
         session.add(room)
         session.commit()
         await message.add_reaction(CustomEmoji.jimbo)

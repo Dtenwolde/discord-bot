@@ -3,6 +3,7 @@ from typing import Optional
 from flask import session, g as flaskg
 
 
+
 def session_user() -> Optional[str]:
     """
     Return the current authenticated user.
@@ -31,14 +32,17 @@ def session_is_authed():
     return session_user() is not None
 
 
-def session_user_set(username: str):
+def session_user_set(user):
     """
     Set the current user associated with the session.
     If not None, session_is_authed() will return True and session_user() will return the user.
     If None, session_is_authed() will return False and session_user() will raise a ValueError.
     :param user: The user or None.
     """
-    if username is None:
+    from database.models.models import User
+    assert type(user) == User
+
+    if user is None:
         del session['username']
     else:
-        session['username'] = username
+        session['username'] = user

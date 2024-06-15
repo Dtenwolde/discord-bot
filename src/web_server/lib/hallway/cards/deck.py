@@ -1,12 +1,12 @@
 import copy
 import random
 
+from database import db
+from database.models.hallway_model import StoredDeck
 from src.web_server import sio
 from src.web_server.lib.hallway.entities.spells import available_cards
 from src.web_server.lib.hallway.entities.spells.card import Card
 from src.web_server.lib.hallway.exceptions import InvalidAction
-from src.web_server.lib.hallway.storage.database import db
-from src.web_server.lib.hallway.storage.model import StoredDeck
 
 
 def create_base_deck():
@@ -98,7 +98,7 @@ class Deck:
         :return:
         """
         # Fetch data object and remove it from the database session to get a freely editable object
-        session = db.session()
+        session = db.session
         deck = session.query(StoredDeck).filter(StoredDeck.player_name == self.player.username).one_or_none()
 
         deck = None  # TODO: Remove this debug statement

@@ -27,7 +27,7 @@ def get_top2000_url():
                     }
                 }
             }","variables":{"channelSlug":"npo-radio-2"}}"""  # noqa
-    session = requests.session()
+    session = requests.session
 
     session.get("https://www.nporadio2.nl/online-radio-luisteren/gedraaid")
 

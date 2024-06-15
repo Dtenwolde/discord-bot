@@ -3,7 +3,7 @@ from discord.ext.commands import Context
 from discord import Embed, User
 
 from src.custom_emoji import CustomEmoji
-from src.database import database
+from src.database import db
 from src.database.models.models import EsportsGame
 from src.database.repository import game_repository, profile_repository
 from datetime import datetime, timezone
@@ -142,7 +142,7 @@ class Esports(commands.Cog):
 
     @staticmethod
     def create_league_bet(context, match_id, bet_team, bet_amount, odd, profile):
-        session = database.session()
+        session = db.session
 
         game = EsportsGame(
             owner_id=context.author.id,
@@ -159,7 +159,7 @@ class Esports(commands.Cog):
     @tasks.loop(seconds=300)
     async def payout_league_bet(self):
         await self.bot.wait_until_ready()
-        session = database.session()
+        session = db.session
         games = session.query(EsportsGame).filter(EsportsGame.processed == False).all()
         try:
             for game in games:
@@ -188,7 +188,7 @@ class Esports(commands.Cog):
             information = f"{profile['owner']} lost {game['amount']} on the bet {match.get('name')}"
             correct_bet = False
 
-        session = database.session()
+        session = db.session
         game.processed = True
         game.result = correct_bet
         session.commit()

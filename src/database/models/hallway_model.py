@@ -1,10 +1,9 @@
-import sqlalchemy
 from sqlalchemy import String, JSON, Column, Integer
 
-from src.web_server.lib.hallway.storage.database import GameBase
+from database import db
 
 
-class StoredDeck(GameBase):
+class StoredDeck(db.Model):
     __tablename__ = "deck"
 
     player_name = Column(String, primary_key=True)

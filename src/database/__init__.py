@@ -1,23 +1,4 @@
-import sqlalchemy
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
+from flask_sqlalchemy import SQLAlchemy
 
+db = SQLAlchemy(session_options={"expire_on_commit": False})
 
-class Database:
-    def __init__(self, name: str):
-        self.engine = sqlalchemy.create_engine('sqlite:///' + name, echo=False)
-        self.connection = self.engine.connect()
-        self._session_factory = sessionmaker(autocommit=False, autoflush=True, bind=self.engine)
-        self._session = scoped_session(self._session_factory)
-
-    def session(self) -> scoped_session:
-        return self._session()
-
-
-def create_all_models():
-    Base.metadata.create_all(database.engine)
-
-
-# Create db
-Base = declarative_base()
-database = Database("storage/database.db")

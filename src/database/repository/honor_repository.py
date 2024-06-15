@@ -1,11 +1,9 @@
 from datetime import datetime
 
-from bson import SON
 from sqlalchemy import func
 
+from database import db
 from src.database.models.models import Honor
-from src.database import database
-import pymongo
 
 
 def add_honor(honor: Honor):
@@ -15,7 +13,7 @@ def add_honor(honor: Honor):
     :return:
     """
 
-    session = database.session()
+    session = db.session
     session.add(honor)
     session.commit()
 
@@ -26,7 +24,7 @@ def get_honors():
     :return:
     """
 
-    session = database.session()
+    session = db.session
     return (session
             .query(Honor, func.count(Honor).label("total"))
             .group_by(Honor.honoree_id)
@@ -35,7 +33,7 @@ def get_honors():
 
 
 def get_last_honor(guild, honoring):
-    session = database.session()
+    session = db.session
     return (session
             .query(Honor)
             .filter(Honor.guild_id == guild.id and Honor.honoring_id == honoring.id)
@@ -65,7 +63,7 @@ def honor_allowed(guild, honoring):
 
 
 def get_honor_count_by_id(user_id):
-    session = database.session()
+    session = db.session
     return (session
             .query(Honor)
             .filter(Honor.honoree_id == user_id)

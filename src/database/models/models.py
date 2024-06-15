@@ -3,7 +3,7 @@ from sqlalchemy import String, Integer, Boolean, Column, DateTime, ForeignKey, F
 
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 
-from src.database import Base
+from database import db
 
 
 class JSONAble():
@@ -22,7 +22,7 @@ class JSONAble():
         return {k: v for k, v in self.__dict__.values() if _is_valid(k, v)}
 
 
-class User(Base, JSONAble):
+class User(db.Model, JSONAble):
     __tablename__ = "user"
 
     discord_id = Column(Integer, primary_key=True)
@@ -34,7 +34,7 @@ class User(Base, JSONAble):
     birthday = Column(DateTime)
 
 
-class Trigger(Base, JSONAble):
+class Trigger(db.Model, JSONAble):
     __tablename__ = "trigger"
 
     id = Column(Integer, primary_key=True)
@@ -51,7 +51,7 @@ class Trigger(Base, JSONAble):
         return "%s -> %s by %s (%s)" % (self.trigger, self.response, self.creator, self.guild_id)
 
 
-class Report(Base, JSONAble):
+class Report(db.Model, JSONAble):
     __tablename__ = "report"
 
     id = Column(Integer, primary_key=True)
@@ -67,7 +67,7 @@ class Report(Base, JSONAble):
     time = Column(DateTime, default=datetime.now())
 
 
-class Honor(Base, JSONAble):
+class Honor(db.Model, JSONAble):
     __tablename__ = "honor"
 
     id = Column(Integer, primary_key=True)
@@ -83,7 +83,7 @@ class Honor(Base, JSONAble):
     time = Column(DateTime, default=datetime.now())
 
 
-class Song(Base, JSONAble):
+class Song(db.Model, JSONAble):
     __tablename__ = "song"
 
     id = Column(Integer, primary_key=True)
@@ -96,7 +96,7 @@ class Song(Base, JSONAble):
     latest_playtime = Column(DateTime, default=datetime.now())
 
 
-class Playlist(Base, JSONAble):
+class Playlist(db.Model, JSONAble):
     __tablename__ = "playlist"
 
     id = Column(Integer, primary_key=True)
@@ -107,7 +107,7 @@ class Playlist(Base, JSONAble):
     public = Column(Boolean, default=False)
 
 
-class PlaylistSong(Base, JSONAble):
+class PlaylistSong(db.Model, JSONAble):
     __tablename__ = "playlist_song"
 
     id = Column(Integer, primary_key=True)
@@ -119,7 +119,7 @@ class PlaylistSong(Base, JSONAble):
     song = relationship("Song")
 
 
-class LeagueGame(Base, JSONAble):
+class LeagueGame(db.Model, JSONAble):
     __tablename__ = "league_game"
 
     id = Column(Integer, primary_key=True)
@@ -135,7 +135,7 @@ class LeagueGame(Base, JSONAble):
     payed_out = Column(Boolean, default=False)
 
 
-class EsportsGame(Base, JSONAble):
+class EsportsGame(db.Model, JSONAble):
     __tablename__ = "esports_game"
     id = Column(Integer, primary_key=True)
 
@@ -153,7 +153,7 @@ class EsportsGame(Base, JSONAble):
     result = Column(String, default=None)
 
 
-class GameRoom(Base, JSONAble):
+class GameRoom(db.Model, JSONAble):
     __tablename__ = "game_room"
 
     id = Column(Integer, primary_key=True)

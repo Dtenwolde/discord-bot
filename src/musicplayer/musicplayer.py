@@ -10,7 +10,7 @@ from discord import Message
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
 
-from src.database import database
+from src.database import db
 
 from src.custom_emoji import CustomEmoji
 from src.database.repository import profile_repository
@@ -74,7 +74,7 @@ class Playlist(commands.Cog):
                         numbers = [int(s_number)]
 
                     # Add all songs to this playlist
-                    session = database.session()
+                    session = db.session
                     for number in numbers:
                         try:
                             song = songs[int(number)]
@@ -105,7 +105,7 @@ class Playlist(commands.Cog):
             title = song.title
 
             # Delete song from db
-            session = database.session()
+            session = db.session
             session.delete(song)
             session.commit()
 

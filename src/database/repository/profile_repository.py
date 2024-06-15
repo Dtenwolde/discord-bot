@@ -3,9 +3,8 @@ from functools import wraps
 from time import time
 
 from discord import User
-from pymongo import ReturnDocument
 
-from src.database import database
+from database import db
 from src.database.models import models
 
 
@@ -23,7 +22,7 @@ def timing(f):
 
 
 def get_profile(user: User = None, user_id: int = None, username: str = None):
-    session = database.session()
+    session = db.session
 
     db_user = None
     # Get the usermodel from either method
@@ -43,21 +42,21 @@ def get_profile(user: User = None, user_id: int = None, username: str = None):
 
 
 def add_birthday(user: models.User, birthday):
-    session = database.session()
+    session = db.session
     user.birthday = birthday
     session.commit()
     return user
 
 
 def update_money(user: models.User, money_update):
-    session = database.session()
+    session = db.session
     user.balance = max(user.balance + money_update, 0)
     session.commit()
     return user
 
 
 def update_active_playlist(profile: models.User, value):
-    session = database.session()
+    session = db.session
     profile.active_playlist = value
     session.commit()
     return profile

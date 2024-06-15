@@ -3,7 +3,7 @@ from discord import User, Forbidden, Message, Embed
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from src.database import database
+from src.database import db
 from src.database.models import models
 from src.database.repository import profile_repository
 from src.custom_emoji import CustomEmoji
@@ -59,8 +59,7 @@ class Currency(commands.Cog):
 
     @commands.command()
     async def balancetop(self, context: Context):
-        session = database.session()
-        profiles = session.query(models.User).order_by(models.User.balance.desc()).limit(15)
+        profiles = db.session.query(models.User).order_by(models.User.balance.desc()).limit(15)
         body = ""
         for i, profile in enumerate(profiles):
             body += f"{i + 1}: {profile.discord_username} ({format_money(profile.balance)})\n"

@@ -3,7 +3,7 @@ from discord import User
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
 
-from src.database import database
+from src.database import db
 from src.database.models import models
 from src.database.models.models import LeagueGame
 from src.database.repository import profile_repository
@@ -72,7 +72,7 @@ class LeagueAPI(commands.Cog):
             game.team = team
             game.game_id = game_id
 
-            session = database.session()
+            session = db.session
             session.commit()
         elif raw_response.status_code == 403:
             print("[ERROR]: Forbidden to access RIOT API. Consider updating the API key")
@@ -84,7 +84,7 @@ class LeagueAPI(commands.Cog):
         endpoint = "/lol/match/v5/matches/EUW1_%s" % game['game_id']
         raw_response = requests.get(CONTINENT_URL + API_URL + endpoint, headers=self.headers)
 
-        session = database.session()
+        session = db.session
 
         if raw_response.status_code == 200:
             response = raw_response.json()['info']
@@ -122,7 +122,7 @@ class LeagueAPI(commands.Cog):
     async def payout_games(self):
         await self.bot.wait_until_ready()
 
-        session = database.session()
+        session = db.session
         unprocessed_games = session.query(LeagueGame).filter(LeagueGame.payed_out == False).all()
 
         try:
@@ -148,7 +148,7 @@ class LeagueAPI(commands.Cog):
         """
         Bet on the next league game you will play.
         """
-        session = database.session()
+        session = db.session
         profile = profile_repository.get_profile(user_id=context.author.id)
 
         if profile['league_user_id'] is None:
@@ -189,7 +189,7 @@ class LeagueAPI(commands.Cog):
         """
         Shows a list of your active bets and the value.
         """
-        session = database.session()
+        session = db.session
         bets = session.query(LeagueGame).filter(LeagueGame.owner_id == context.author.id).all()
 
         out = "```\nActive bets:\n"  # TODO Create embed for this
@@ -210,7 +210,7 @@ class LeagueAPI(commands.Cog):
         if account_id is None:
             return await context.channel.send("This summoner name does not seem to exist.")
 
-        session = database.session()
+        session = db.session
         profile.league_user_id = account_id
         session.commit()
 

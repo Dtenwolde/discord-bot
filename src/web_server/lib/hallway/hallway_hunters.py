@@ -6,7 +6,8 @@ import time
 from datetime import datetime
 from typing import List, Optional, Dict
 
-from src.web_server import sio, timing
+from src.web_server import sio
+from web_server.utils import timing
 from src.web_server.lib.hallway.entities.movable_entity import MovableEntity
 from src.web_server.lib.hallway.entities.spells import SpellEntity
 from src.web_server.lib.hallway.entities.enemies.MonkeyBall import MonkeyBall

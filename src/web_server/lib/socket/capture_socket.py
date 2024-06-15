@@ -3,7 +3,8 @@ from typing import Dict
 from flask import request
 from flask_socketio import join_room
 
-from src.web_server import session_user, sio, timing
+from src.web_server import session_user, sio
+from web_server.utils import timing
 from src.web_server.lib.capture.CaptureGame import CaptureGame, CapturePlayer
 from src.web_server.lib.user_session import session_user_set
 
