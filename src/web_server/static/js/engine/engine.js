@@ -630,6 +630,13 @@ export class View {
         this.fps = 1000 / (performance.now() - this._lastInvokation);
         this._lastInvokation = performance.now();
     }
+
+    childView() {
+        let child = new View(this.context, 0, 0, 0, 0);
+        child.parent = this;
+        this.children.push(child);
+        return child
+    }
 }
 
 

@@ -112,7 +112,7 @@ def line_of_sight_endpoints(direction: EntityDirections, distance=11):
         LOS_CACHE[EntityDirections.LEFT] = []
         LOS_CACHE[EntityDirections.RIGHT] = []
 
-        step = 25  # Amount of steps to consider when filling in the angles
+        step = 35  # Amount of steps to consider when filling in the angles
         start = -1 / 10  # Angle in pi
         end = 11 / 10  # Angle in pi
         hp = math.pi / 2  # Half pi
@@ -124,6 +124,9 @@ def line_of_sight_endpoints(direction: EntityDirections, distance=11):
                 Point(math.cos(x + 2 * hp) * distance, math.sin(x + 2 * hp) * distance))
             LOS_CACHE[EntityDirections.RIGHT].append(
                 Point(math.cos(x + 3 * hp) * distance, math.sin(x + 3 * hp) * distance))
+
+        for key in LOS_CACHE.keys():
+            LOS_CACHE[key] = list(set(LOS_CACHE[key]))
 
     return LOS_CACHE[direction]
 

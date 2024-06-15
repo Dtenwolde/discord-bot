@@ -9,7 +9,7 @@ import {
 } from "../engine/engine.js";
 import {getUsername} from "../engine/auth.js";
 import {HallwayHunters} from "./hallway.js";
-import {COLORS, loadImages, TileSet} from "./resources.js";
+import {audioSamples, COLORS, loadImages, TileSet} from "./resources.js";
 import {Card} from "./player.js";
 
 let canvas = document.getElementById("canvas");
@@ -233,7 +233,7 @@ function initializeMenu() {
         button.playerText.fontSize = 20;
         button.playerText.color = "#fff";
         menuView.colorButtons[color] = button;
-        button.setOnClick(canvas, menuView,(_) => {
+        button.setOnClick(canvas, menuView, (_) => {
             socket.emit("changeColor", {
                 room_id: ROOM_ID,
                 color: color,
@@ -247,6 +247,8 @@ function initializeMenu() {
     /*
      * Add deckbuilding cardview on the right-hand side of the game
      */
+    let cardDeckWindow = menuView.childView();
+
     let cardScrollBackground = new ColorTile("rgba(107,54,39,0.53)");
     cardScrollBackground.x = cardView.x;
     cardScrollBackground.y = cardView.y;
@@ -294,7 +296,7 @@ function createDeckButtons(data) {
         cardButton.card = new Card(cardButton.x, cardButton.y, w, h);
         cardButton.card.setAllText(card);
 
-        cardButton.setOnClick(canvas, cardView,(e) => {
+        cardButton.setOnClick(canvas, cardView, (e) => {
             socket.emit("add_card", {
                 room: ROOM_ID,
                 card_name: name
@@ -313,7 +315,7 @@ function createDeckButtons(data) {
         deckButton.card.cardName.setText(`${card.name} (${count})`);
         deckButton.card.cardDescription.setText(card.description);
 
-        deckButton.setOnClick(canvas, deckView,(e) => {
+        deckButton.setOnClick(canvas, deckView, (e) => {
             socket.emit("remove_card", {
                 room: ROOM_ID,
                 card_name: card.name
@@ -333,7 +335,6 @@ function initializeLoading() {
     overlay.width = background.width;
     overlay.height = background.height;
     background.z = overlay.z = -1;
-
 
 
     const circleLoading = new CircleLoading(background.width / 2, background.height / 2, 35);
@@ -375,6 +376,7 @@ let intervalID;
 let started = false;
 
 function start() {
+    // Start rendering loop
     intervalID = requestAnimationFrame(gameLoop);
 
     game.initializePlayers();
@@ -415,6 +417,9 @@ function start() {
             game.setState(data);
 
             if (!started) {
+                // Start audio loop
+                audioSamples.background_music.play().then()
+
                 postStartInitialize(data);
                 started = true;
             }
@@ -465,7 +470,7 @@ function initialize(tileSet) {
         game.stats.ping.put(Date.now() - startTime);
     });
 
-    // Keylisteners for user input
+    // Key listeners for user input
     document.addEventListener("keydown", (ev) => {
         const VALID_ACTIONS = [
             "Enter", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"
@@ -508,20 +513,19 @@ function changeSettings() {
 socket.on("set_session", (data) => {
     USER_NAME = data;
     // Load resources
-
     let tileSet = new TileSet();
     let setBackground = (image) => {
         menuView.background = image
     };
     loadImages("/static/images/tiles/dungeon_sheet.png", (x) => tileSet.splitTileset(x)).then(() =>
-    loadImages("/static/images/tiles/background.png", setBackground).then(() => {
-        initialize(tileSet);
+        loadImages("/static/images/tiles/background.png", setBackground).then(() => {
+            initialize(tileSet);
 
-        // Emit join event for server to register user
-        socket.emit("join", {
-            "room": ROOM_ID,
-        });
-    }));
+            // Emit join event for server to register user
+            socket.emit("join", {
+                "room": ROOM_ID,
+            });
+        }));
 });
 
 // Start the game

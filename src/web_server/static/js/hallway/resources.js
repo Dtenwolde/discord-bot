@@ -30,6 +30,15 @@ function rotateImageData(context, imageData, degrees) {
     return output;
 }
 
+class AudioSamples {
+    constructor() {
+        this.background_music = new Audio(`/static/audio/dungeon-crawler.wav`);
+        this.background_music.volume = 0.5;
+        this.background_music.loop = true;
+    }
+}
+export let audioSamples = new AudioSamples()
+
 export class TileSet {
     constructor() {
     }
