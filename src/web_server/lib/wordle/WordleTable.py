@@ -33,8 +33,11 @@ def filter_words(filename):
 MIN_WORD_LENGTH = 2
 MAX_WORD_LENGTH = 12
 print("Initializing word lists.")
-filter_words("storage/wordlist.txt")
-print("Done initializing word lists.")
+try:
+    filter_words("storage/wordlist.txt")
+    print("Done initializing word lists.")
+except FileNotFoundError:
+    print("Could not initialize word list. File not found.")
 
 
 class WordlePhases(Enum):
@@ -115,7 +118,7 @@ class WordleTable:
                     "word": self.current_word, "correct_position": [],
                     "correct_character": []
                 }
-                sio.emit("word", response, json=True, **self.config)
+                sio.emit("word", response, **self.config)
 
     def initialize_round(self):
         """
@@ -150,7 +153,7 @@ class WordleTable:
                 "word": self.current_word, "correct_position": [],
                 "correct_character": []
             }
-            sio.emit("word", response, json=True, **self.config)
+            sio.emit("word", response, **self.config)
             self.ongoing = False
 
     def get_state(self):
@@ -220,13 +223,13 @@ class WordleTable:
             "word": guessed_word, "correct_position": correct_position,
             "correct_character": correct_character
         }
-        sio.emit("word", response, json=True, **self.config)
+        sio.emit("word", response, **self.config)
 
         # We have to check for round end, this could be the last possible word choice.
         self.handle_round_end()
 
     def broadcast_players(self):
-        sio.emit("players", [player.to_json() for player in self.player_list], json=True, **self.config)
+        sio.emit("players", [player.to_json() for player in self.player_list], **self.config)
 
     def join(self, player: WordlePlayer):
 

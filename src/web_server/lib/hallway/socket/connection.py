@@ -2,7 +2,6 @@ from flask import request
 from flask_socketio import join_room
 
 from src.web_server import session_user, sio
-from web_server.utils import timing
 from src.web_server.lib.hallway.hallway_hunters import HallwayHunters, games
 from src.web_server.lib.user_session import session_user_set
 
@@ -13,7 +12,6 @@ def ping():
 
 
 @sio.on("set_session", namespace="/hallway")
-@timing
 def on_set_session(data):
     username = data.get("username", None)
     print(f"{username} connected.")
@@ -24,11 +22,11 @@ def on_set_session(data):
 
 
 @sio.on("join", namespace="/hallway")
-@timing
 def on_join(data):
     room_id = int(data['room'])
     join_room(room=room_id)
     username = session_user()
+    print("Joining room:", username)
 
     if room_id not in games:
         games[room_id] = HallwayHunters(room_id, username)
@@ -36,12 +34,11 @@ def on_join(data):
     game = games[room_id]
     game.add_player(username, request.sid)
 
-    sio.emit("join", username, json=True, room=room_id, namespace="/hallway")
+    sio.emit("join", username, room=room_id, namespace="/hallway")
     game.update_players()
 
 
 @sio.event(namespace="/hallway")
-@timing
 def disconnect():
     for room_id, game in games.items():
         print("Looking for disconnect...")
@@ -51,4 +48,7 @@ def disconnect():
             game.remove_player(player.username)
 
             game.broadcast("%s left the game." % player.username)
-            sio.emit("leave", player.username, json=True, room=room_id, namespace="/hallway")
+            sio.emit("leave", player.username, room=room_id, namespace="/hallway")
+
+
+print("SocketIO hallway registered.")

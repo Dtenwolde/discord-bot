@@ -27,9 +27,10 @@ from src.settings import Settings
 class Bot(discord.ext.commands.Bot):
     commands = {}
 
-    def __init__(self, config, intents):
+    def __init__(self, intents):
         super().__init__(command_prefix=discord.ext.commands.when_mentioned_or("!"), intents=intents)
 
+    def init_app(self, config, app):
         # Load config settings
         self.config = configparser.ConfigParser()
         self.settings = Settings()
@@ -38,7 +39,6 @@ class Bot(discord.ext.commands.Bot):
 
         self.triggers: dict[List[Trigger]] = dict()
 
-        print("Done initializing.")
 
     def initialize(self):
         self.music_player = MusicPlayer(self)
@@ -68,7 +68,7 @@ class Bot(discord.ext.commands.Bot):
 
     def set_config(self, name):
         self.config.read(name)
-        self.settings.page_size = int(self.config["DEFAULT"]["PageSize"])
+        self.settings.page_size = int(self.config["DEFAULT"].get("PageSize", "8"))
 
     async def kill(self):
         # Waiting for handler thread to finish.
@@ -123,7 +123,7 @@ async def add_all_cogs(bot):
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = Bot("config.conf", intents=intents)
+bot = Bot(intents=intents)
 
 
 # asyncio.run(add_all_cogs(bot))

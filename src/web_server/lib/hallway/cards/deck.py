@@ -1,8 +1,8 @@
 import copy
 import random
 
-from database import db
-from database.models.hallway_model import StoredDeck
+from src.database import db
+from src.database.models.hallway_model import StoredDeck
 from src.web_server import sio
 from src.web_server.lib.hallway.entities.spells import available_cards
 from src.web_server.lib.hallway.entities.spells.card import Card
@@ -89,8 +89,7 @@ class Deck:
                 available_cards[card_name].to_json()
             ) for card_name in list(dict.fromkeys(self.remaining_cards))],
         }
-        sio.emit("deck", data, json=True,
-                 room=self.player.socket, namespace="/hallway")
+        sio.emit("deck", data, room=self.player.socket, namespace="/hallway")
 
     def update_cards_for_player(self):
         """

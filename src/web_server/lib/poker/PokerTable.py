@@ -303,9 +303,9 @@ class PokerTable:
         else:
             return None
 
-    def add_player(self, profile: dict, socket_id):
+    def add_player(self, profile, socket_id):
         for player in self.player_list + self.spectator_list:
-            if player.profile['owner_id'] == profile['owner_id']:
+            if player.profile.discord_id == profile.discord_id:
                 # If the user is already in the list, overwrite the socket id to the newest one.
                 player.socket = socket_id
                 return
@@ -418,7 +418,7 @@ class PokerTable:
 
     def update_players(self):
         for player in self.player_list + self.spectator_list:
-            sio.emit("table_state", self.export_state(player), json=True, room=player.socket, namespace="/poker")
+            sio.emit("table_state", self.export_state(player), room=player.socket, namespace="/poker")
 
     def export_player_game_data(self):
         data = []

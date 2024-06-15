@@ -3,7 +3,7 @@ from sqlalchemy import String, Integer, Boolean, Column, DateTime, ForeignKey, F
 
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 
-from database import db
+from src.database import db
 
 
 class JSONAble():
@@ -22,7 +22,7 @@ class JSONAble():
         return {k: v for k, v in self.__dict__.values() if _is_valid(k, v)}
 
 
-class User(db.Model, JSONAble):
+class UserModel(db.Model, JSONAble):
     __tablename__ = "user"
 
     discord_id = Column(Integer, primary_key=True)
@@ -42,7 +42,7 @@ class Trigger(db.Model, JSONAble):
     guild_id = Column(Integer)
 
     creator_id = mapped_column(ForeignKey("user.discord_id"))
-    creator: Mapped["User"] = relationship("User")
+    creator: Mapped["UserModel"] = relationship("UserModel")
 
     trigger = Column(String)
     response = Column(String)
@@ -59,10 +59,10 @@ class Report(db.Model, JSONAble):
     guild_id = Column(Integer)
 
     reportee_id: Mapped[int] = mapped_column(ForeignKey("user.discord_id"))
-    reportee: Mapped["User"] = relationship(foreign_keys=[reportee_id])
+    reportee: Mapped["UserModel"] = relationship(foreign_keys=[reportee_id])
 
     reporting_id = mapped_column(ForeignKey("user.discord_id"))
-    reporting: Mapped["User"] = relationship(foreign_keys=[reporting_id])
+    reporting: Mapped["UserModel"] = relationship(foreign_keys=[reporting_id])
 
     time = Column(DateTime, default=datetime.now())
 
@@ -75,10 +75,10 @@ class Honor(db.Model, JSONAble):
     guild_id = Column(Integer)
 
     honoree_id = Column(ForeignKey("user.discord_id"))
-    honoree = relationship("User", foreign_keys=[honoree_id])
+    honoree = relationship("UserModel", foreign_keys=[honoree_id])
 
     honoring_id = Column(ForeignKey("user.discord_id"))
-    honoring = relationship("User", foreign_keys=[honoring_id])
+    honoring = relationship("UserModel", foreign_keys=[honoring_id])
 
     time = Column(DateTime, default=datetime.now())
 
@@ -89,7 +89,7 @@ class Song(db.Model, JSONAble):
     id = Column(Integer, primary_key=True)
 
     owner_id = Column(ForeignKey("user.discord_id"))
-    owner = relationship("User")
+    owner = relationship("UserModel")
 
     title = Column(String)
     url = Column(String)
@@ -102,7 +102,7 @@ class Playlist(db.Model, JSONAble):
     id = Column(Integer, primary_key=True)
 
     owner_id = Column(ForeignKey("user.discord_id"))
-    owner = relationship("User")
+    owner = relationship("UserModel")
     title = Column(String)
     public = Column(Boolean, default=False)
 
@@ -125,7 +125,7 @@ class LeagueGame(db.Model, JSONAble):
     id = Column(Integer, primary_key=True)
 
     owner_id = Column(ForeignKey("user.discord_id"))
-    owner = relationship("User")
+    owner = relationship("UserModel")
 
     amount = Column(Integer)
     type = Column(String)
@@ -140,7 +140,7 @@ class EsportsGame(db.Model, JSONAble):
     id = Column(Integer, primary_key=True)
 
     owner_id = Column(ForeignKey("user.discord_id"))
-    owner = relationship("User")
+    owner = relationship("UserModel")
 
     game_id = Column(Integer, default=None)
 
@@ -161,7 +161,7 @@ class GameRoom(db.Model, JSONAble):
     name = Column(String)
 
     author_id = Column(ForeignKey("user.discord_id"))
-    author = relationship("User")
+    author = relationship("UserModel")
 
     type = Column(String)
     created_datetime = Column(DateTime, default=datetime.now())

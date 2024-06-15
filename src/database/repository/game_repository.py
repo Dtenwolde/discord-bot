@@ -1,4 +1,4 @@
-from database import db
+from src.database import db
 from src.database.models.models import LeagueGame
 
 

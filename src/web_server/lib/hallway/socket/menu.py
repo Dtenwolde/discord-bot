@@ -1,5 +1,5 @@
 from src.web_server import session_user, sio
-from web_server.utils import timing
+from src.web_server.utils import timing
 from src.web_server.lib.hallway.hallway_hunters import games
 
 

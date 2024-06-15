@@ -2,6 +2,7 @@ import copy
 import random
 from typing import List, Tuple
 
+from src.web_server.lib.hallway.Items import RubbishItem
 from src.web_server.lib.hallway.Utils import Point
 from src.web_server.lib.hallway.entities.entity import Entity
 from src.web_server.lib.hallway.entities.neutral.Chest import Chest

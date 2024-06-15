@@ -7,7 +7,7 @@ class Player:
         Stores information about a player participating in a web_server game.
     """
 
-    def __init__(self, profile: models.User, socket, table):
+    def __init__(self, profile: models.UserModel, socket, table):
         self.profile = profile
         self.socket = socket
         self.initial_balance = profile.balance

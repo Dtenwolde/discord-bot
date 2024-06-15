@@ -4,7 +4,7 @@ from flask import request
 from flask_socketio import join_room
 
 from src.web_server import session_user, sio
-from web_server.utils import timing
+from src.web_server.utils import timing
 from src.web_server.lib.user_session import session_user_set
 from src.web_server.lib.wordle.WordleTable import WordleTable, WordlePlayer
 
@@ -74,7 +74,7 @@ def on_join(data):
 
     # Add new player to table if it is not already in there.
     if not table.get_player(session_user()):
-        sio.emit("join", "message", json=True, room=room_id, namespace="/wordle")
+        sio.emit("join", "message", room=room_id, namespace="/wordle")
         # Initialize player and add to table, then inform other players
         player = WordlePlayer(username, request.sid, table)
         table.join(player)

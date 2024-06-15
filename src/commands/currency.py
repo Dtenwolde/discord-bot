@@ -59,7 +59,7 @@ class Currency(commands.Cog):
 
     @commands.command()
     async def balancetop(self, context: Context):
-        profiles = db.session.query(models.User).order_by(models.User.balance.desc()).limit(15)
+        profiles = db.session.query(models.UserModel).order_by(models.UserModel.balance.desc()).limit(15)
         body = ""
         for i, profile in enumerate(profiles):
             body += f"{i + 1}: {profile.discord_username} ({format_money(profile.balance)})\n"

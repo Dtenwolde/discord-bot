@@ -61,7 +61,7 @@ class CaptureGame:
         }
 
     def broadcast_players(self):
-        sio.emit("players", [player.to_json() for player in self.player_list], json=True, **self.config)
+        sio.emit("players", [player.to_json() for player in self.player_list], **self.config)
 
     def join(self, player: CapturePlayer):
         self.player_list.append(player)

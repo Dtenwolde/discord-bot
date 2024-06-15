@@ -113,8 +113,8 @@ def line_of_sight_endpoints(direction: EntityDirections, distance=11):
         LOS_CACHE[EntityDirections.RIGHT] = []
 
         step = 25  # Amount of steps to consider when filling in the angles
-        start = 1 / 10  # Angle in pi
-        end = 9 / 10  # Angle in pi
+        start = -1 / 10  # Angle in pi
+        end = 11 / 10  # Angle in pi
         hp = math.pi / 2  # Half pi
         for i in range(1, step):
             x = ((start + i * ((end - start) / step)) * math.pi)

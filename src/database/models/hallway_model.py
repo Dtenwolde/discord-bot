@@ -1,6 +1,6 @@
 from sqlalchemy import String, JSON, Column, Integer
 
-from database import db
+from src.database import db
 
 
 class StoredDeck(db.Model):

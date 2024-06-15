@@ -304,7 +304,6 @@ export class CircleLoading extends Point {
         const phi = (2 * Math.PI);
         this.tick++;
 
-        if (this.tick % (this.ticksPerRotation / this.chaseSpeed) === 0) this.chasing = !this.chasing;
 
         const a1 = (this.tick % this.ticksPerRotation) / this.ticksPerRotation * phi;
         const a2 = (a1 + ((this.tick * this.chaseSpeed) % this.ticksPerRotation) / this.ticksPerRotation * phi) % (phi);
@@ -322,6 +321,8 @@ export class CircleLoading extends Point {
         context.beginPath();
         context.arc(this.x, this.y, this.radius, sAngle, eAngle);
         context.stroke();
+
+        if (this.tick % (this.ticksPerRotation / this.chaseSpeed) === 0) this.chasing = !this.chasing;
     }
 }
 

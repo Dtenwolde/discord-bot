@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import func
 
-from database import db
+from src.database import db
 from src.database.models.models import Report
 
 

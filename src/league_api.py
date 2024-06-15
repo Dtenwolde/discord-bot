@@ -4,7 +4,6 @@ from discord.ext import commands, tasks
 from discord.ext.commands import Context
 
 from src.database import db
-from src.database.models import models
 from src.database.models.models import LeagueGame
 from src.database.repository import profile_repository
 
