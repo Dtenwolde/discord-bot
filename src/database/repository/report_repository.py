@@ -4,12 +4,12 @@ import pymongo
 from bson import SON
 from sqlalchemy import func
 
-from src.database import mongodb as db
 from src.database.repository import profile_repository
 from src.database.models.models import Report
 
 
 def add_report(report: Report):
+    return
     collection = db['report']
     try:
         collection.insert_one(report.to_mongodb())
@@ -36,6 +36,7 @@ def add_report(report: Report):
 
 
 def get_reports():
+    return
     collection = db['report']
     pipeline = [
         {"$group": {"_id": "$reportee_id", "count": {"$sum": 1}}},
@@ -50,6 +51,7 @@ def get_reports():
 
 
 def get_last_reports(guild, reporting):
+    return
     collection = db['report']
 
     return collection.find_one({"guild_id": guild.id, "reporting": reporting},
@@ -57,6 +59,7 @@ def get_last_reports(guild, reporting):
 
 
 def report_allowed(guild, reporting):
+    return
     report = get_last_reports(guild, reporting.name)
 
     if report is None:

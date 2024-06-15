@@ -3,8 +3,8 @@ from discord.ext.commands import Context
 from discord import Embed, User
 
 from src.custom_emoji import CustomEmoji
-from src.database import mongodb as db
-from src.database.models.models import EsportGame
+from src.database import database
+from src.database.models.models import EsportsGame
 from src.database.repository import game_repository, profile_repository
 from datetime import datetime, timezone
 
@@ -142,19 +142,25 @@ class Esports(commands.Cog):
 
     @staticmethod
     def create_league_bet(context, match_id, bet_team, bet_amount, odd, profile):
-        collection = db['esportGame']
+        session = database.session()
 
-
-        # TODO insert odds for team
-        game = EsportGame(context.author, match_id, bet_amount, bet_team.upper(), odd, context.channel.id)
+        game = EsportsGame(
+            owner_id=context.author.id,
+            game_id=match_id,
+            amount=bet_amount,
+            team=bet_team.upper(),
+            odd=odd,
+            channel_id=context.channel.id)
         profile_repository.update_money(profile, -bet_amount)
-        collection.insert_one(game.to_mongodb())
+
+        session.add(game)
+        session.commit()
 
     @tasks.loop(seconds=300)
     async def payout_league_bet(self):
         await self.bot.wait_until_ready()
-        collection = db['esportGame']
-        games = list(collection.find())
+        session = database.session()
+        games = session.query(EsportsGame).filter(EsportsGame.processed == False).all()
         try:
             for game in games:
                 user = self.bot.get_user(game['owner_id'])
@@ -168,7 +174,7 @@ class Esports(commands.Cog):
         except Exception as e:
             print(e)
 
-    def process_game_result(self, user: User, game: dict):
+    def process_game_result(self, user: User, game: EsportsGame):
         match = self.panda_score_api.get_match_by_id(game['game_id'])
         if match is None:
             return f"No match found with match id: {game['game_id']}"
@@ -181,14 +187,11 @@ class Esports(commands.Cog):
         else:
             information = f"{profile['owner']} lost {game['amount']} on the bet {match.get('name')}"
             correct_bet = False
-        collection = db['esportGame']
-        collection.find_one_and_delete({"_id": game['_id']})
-        log_collection = db['esportGameLog']
-        log_game = EsportGame(user, game['game_id'], game['amount'], game['team'], game['odd'],
-                              game['channel_id']).to_mongodb()
-        log_game['timestamp'] = datetime.now()
-        log_game['correct_bet'] = correct_bet
-        log_collection.insert(log_game)
+
+        session = database.session()
+        game.processed = True
+        game.result = correct_bet
+        session.commit()
 
         return information
 

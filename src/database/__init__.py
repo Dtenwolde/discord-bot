@@ -1,27 +1,23 @@
-from pymongo import MongoClient
-import configparser
-import os
+import sqlalchemy
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 
-class MongoDB:
-    def __init__(self, config):
-        self.config = configparser.ConfigParser()
-        self.set_config(config)
-        self.connection_string = f"mongodb+srv://{self.config['MONGODB']['username']}:" \
-                                 f"{self.config['MONGODB']['password']}@" \
-                                 f"cluster0.wvrda.mongodb.net/{self.config['MONGODB']['database']}?" \
-                                 f"retryWrites=true&w=majority"
+class Database:
+    def __init__(self, name: str):
+        self.engine = sqlalchemy.create_engine('sqlite:///' + name, echo=False)
+        self.connection = self.engine.connect()
+        self._session_factory = sessionmaker(autocommit=False, autoflush=True, bind=self.engine)
+        self._session = scoped_session(self._session_factory)
 
-        self.client = MongoClient(self.connection_string, connect=False)
-        if self.config['MONGODB']['Development'] == "True":
-            self.db = self.client["discord-bot2"]
-            print("Using development database")
-        else:
-            self.db = self.client['discord-bot']
-            print("Using production database")
-
-    def set_config(self, name):
-        self.config.read(name)
+    def session(self) -> scoped_session:
+        return self._session()
 
 
-mongodb = MongoDB(f"{os.path.dirname(os.path.realpath(__file__))}\..\..\config.conf").db
+def create_all_models():
+    Base.metadata.create_all(database.engine)
+
+
+# Create db
+Base = declarative_base()
+database = Database("storage/database.db")

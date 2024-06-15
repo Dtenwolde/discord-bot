@@ -1,6 +1,7 @@
 import asyncio
 import configparser
 import threading
+from typing import List
 
 import discord
 from discord.ext import commands
@@ -11,6 +12,7 @@ from src.commands.currency import Currency
 from src.commands.games import Games
 from src.commands.lolesports import Esports
 from src.commands.reputation import Reputation
+from src.database.models.models import Trigger
 from src.musicplayer.music import Music
 from src.musicplayer.soundboard import Soundboard
 from src.database.repository import music_repository, trigger_repository
@@ -34,7 +36,7 @@ class Bot(discord.ext.commands.Bot):
         self.set_config(config)
         self.playlists = {}
 
-        self.triggers = dict()
+        self.triggers: dict[List[Trigger]] = dict()
 
         print("Done initializing.")
 
@@ -44,18 +46,16 @@ class Bot(discord.ext.commands.Bot):
         self.league_api = LeagueAPI(self, self.config["DEFAULT"]["LeagueAPIKey"])
         self.panda_score_api = PandaScoreAPI(self.config["DEFAULT"]["PandaScoreAPIKey"])
 
-        # self.asyncio_loop = asyncio.new_event_loop()
-        # self.asyncio_thread = threading.Thread(target=self.asyncio_loop.run_forever)
-        # self.asyncio_thread.start()
+        self.asyncio_loop = asyncio.new_event_loop()
+        self.asyncio_thread = threading.Thread(target=self.asyncio_loop.run_forever)
+        self.asyncio_thread.start()
 
         self.esports = Esports(self, self.panda_score_api)
 
-        # self.asyncio_thread.start()
         # self.league_api.payout_games.start()
         # self.esports.payout_league_bet.start()
         self.token = self.config["DEFAULT"]["DiscordAPIKey"]
         # self.predictor = Predictor()
-
 
     def get_voice_by_guild(self, guild):
         for voice in self.voice_clients:
@@ -124,6 +124,8 @@ async def add_all_cogs(bot):
 intents = discord.Intents.default()
 intents.message_content = True
 bot = Bot("config.conf", intents=intents)
+
+
 # asyncio.run(add_all_cogs(bot))
 
 @bot.event

@@ -3,60 +3,62 @@ from typing import List, Dict
 
 from discord import Member
 
-from src.database import mongodb as db
+from src.database import database
 from src.database.models.models import Song, Playlist, PlaylistSong
 
 
 def add_music(song: Song):
-    collection = db['song']
-    collection.insert_one(song.to_mongodb())
-    return get_song(song.url)
+    session = database.session()
+    session.add(song)
+    session.commit()
 
 
-def get_music(owner: Member = None) -> List[Dict]:
-    collection = db['song']
+def get_music(owner: Member = None) -> List[Song]:
+    session = database.session()
 
     if not owner:
-        return list(collection.find())
+        return session.query(Song).all()
     else:
-        return list(collection.find({"owner_id": owner.id}))
+        return session.query(Song).filter(Song.owner_id == owner.id).all()
 
 
-def get_song(url: str):
-    collection = db['song']
-    return collection.find_one({"url": url})
+def get_song(url: str) -> Song:
+    session = database.session()
+    return session.query(Song).filter(Song.url == url).one_or_none()
+
 
 def get_song_by_id(_id):
-    collection = db['song']
-    return collection.find_one({"_id": _id})
+    session = database.session()
+    return session.query(Song).filter(Song.id == _id).one_or_none()
 
 
 def remove_from_owner(url: str, owner_id: int):
-    collection = db['song']
-    song = collection.find_one_and_delete({"owner_id": owner_id, "url": url})
+    session = database.session()
+    song = session.query(Song).filter(Song.owner_id == owner_id and Song.url == url).one_or_none()
+    session.delete(song)
+    session.commit()
+
     print(f"Removed {url} from {owner_id}")
     return song
 
 
 def remove_unused():
-    collection = db['song']
-    songs = list(collection.find({"owner_id": -1}))
-
-    for song in songs:
-        # This is the only entry of the song, so remove the file.
-        collection.find_one_and_delete({"_id": song['_id']})
-        print("Deleting %s" % song['title'])
+    session = database.session()
+    session.query(Song).filter(Song.owner_id == -1).delete()
+    session.commit()
 
 
 def remove_by_id(user: Member, lower, upper):
+    session = database.session()
+
     songs_to_delete = get_music(user)[lower:upper]
 
-    collection = db['song']
     out = "```\n:x: Deleted:"
     for song in songs_to_delete:
-        collection.find_one_and_delete({"_id": song['_id']})
-        out += f"- {song['title']} ({song['url']})\n"
+        session.delete(song)
+        out += f"- {song.title} ({song.url})\n"
     out += "```"
+    session.commit()
     return out
 
 
@@ -69,34 +71,38 @@ def show_mymusic(mention, page=0, page_size=15):
     out = "```\n%ss playlist (%d / %d):\n" % (mention.nick, (page + 1), n_pages)
     for i in range(page * page_size, min(len(songs), (page + 1) * page_size)):
         song = songs[i]
-        out += "%d: %s | %s\n" % (i, song['title'], song['owner'])
+        out += "%d: %s | %s\n" % (i, song.title, song.owner.discord_username)
     out += "```"
     return out
 
 
 def query_song_title(query):
-    collection = db['song']
-    return list(collection.find({"title": {"$regex": query, "$options": "i"}}))
-
-
-def update_latest_playtime(song):
-    collection = db['song']
-    return collection.find_one_and_update({"url": song['url']}, {"$set": {'latest_playtime': datetime.now()}})
+    session = database.session()
+    return session.query(Song).filter(Song.title.like(f"%{query}%")).all()
 
 
 def get_playlist(owner, name):
+    """
+    Get the playlist with this name for this user, or create one if none exist.
+    :param owner:
+    :param name:
+    :return:
+    """
     if name is None:
         return None
-    collection = db['playlist']
-    playlist = collection.find_one({"title": name})
+    session = database.session()
+    playlist = session.query(Playlist).filter(Playlist.owner_id == owner.id and Playlist.title == name).one_or_none()
+
     if not playlist:
         print("Creating new playlist:", name)
-        playlist_id = collection.insert_one(Playlist(owner, name).to_mongodb())
-        playlist = collection.find_one({"_id": playlist_id})
+        playlist = Playlist(owner_id=owner.id, title=name, public=False)
+        session.add(playlist)
+        session.commit()
+
     return playlist
 
 
-def get_playlist_songs(playlist: dict):
-    collection = db['playlistSong']
-    songs = list(collection.find({"playlist_id": playlist['_id']}))
-    return songs
+def get_playlist_songs(playlist: Playlist) -> List[Song]:
+    session = database.session()
+
+    return session.query(PlaylistSong).filter(PlaylistSong.playlist_id == playlist.id).all()

@@ -101,7 +101,8 @@ class Reputation(commands.Cog):
 
             time = honor_repository.honor_allowed(message.guild, honoring)
             if time is None:
-                honor = Honor(message.guild, honoree, honoring)
+                honor = Honor(guild_id=message.guild.id, honoree_id=honoree.id, honoring_id=honoring.id)
+
                 # Add money to balance if honored
                 honor_repository.add_honor(honor)
                 profile = profile_repository.get_profile(user_id=honoree.id)

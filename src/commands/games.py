@@ -5,8 +5,8 @@ from discord import User, Message, Reaction
 from discord.ext import commands
 from discord.ext.commands import Context
 from src.custom_emoji import CustomEmoji
-from src.database import mongodb as db
-from src.database.models.models import RoomModel
+from src.database import database
+from src.database.models.models import GameRoom
 from src.database.repository import room_repository, profile_repository
 
 
@@ -51,7 +51,8 @@ class Games(commands.Cog):
         embed.add_field(name="How to join", value=f"Click {CustomEmoji.jimbo} to join.")
         message = await context.channel.send(embed=embed)
         # Create new room
-        room = RoomModel(title, profile, game_type, datetime.now(), message.id)
-        collection = db['gameRoom']
-        collection.insert_one(room.to_mongodb())
+        room = GameRoom(title=title, author_id=profile.discord_id, type=game_type, message_id=message.id)
+        session = database.session()
+        session.add(room)
+        session.commit()
         await message.add_reaction(CustomEmoji.jimbo)

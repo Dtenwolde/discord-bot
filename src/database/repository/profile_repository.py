@@ -5,8 +5,8 @@ from time import time
 from discord import User
 from pymongo import ReturnDocument
 
-from src.database import mongodb as db
-from src.database.models.models import Profile
+from src.database import database
+from src.database.models import models
 
 
 def timing(f):
@@ -21,40 +21,43 @@ def timing(f):
 
     return wrap
 
-def get_money(user: User):
-    result = db['profile'].find_one({"owner_id": user.id})
-    # TODO check if this works
-    if not result:
-        # TODO add init money back
-        profile_of_user = Profile(user)
-        profile_of_user.init_balance()
-        result = db['profile'].insert_one(profile_of_user.to_mongodb())
 
-    return result
-
-
-def add_birthday(user: dict, birthday):
-    return db['profile'].find_one_and_update(filter={"_id": user['_id']}, update={"$set": {'birthday': birthday}},
-                                             upsert=True, return_document=ReturnDocument.AFTER)
-
-
-def update_money(user: dict, money_update):
-    new_balance = max(user['balance'] + money_update, 0)
-    return db['profile'].find_one_and_update(filter={"_id": user['_id']}, update={"$set": {'balance': new_balance}},
-                                             upsert=True, return_document=ReturnDocument.AFTER)
-
-
-@timing
 def get_profile(user: User = None, user_id: int = None, username: str = None):
+    session = database.session()
+
+    db_user = None
+    # Get the usermodel from either method
     if user is not None:
-        return db['profile'].find_one({"owner_id": user.id})
-    if user_id is not None:
-        return db['profile'].find_one({"owner_id": user_id})
-    if username is not None:
-        return db['profile'].find_one({"owner": username})
+        db_user = session.query(models.User).filter(models.User.discord_id == user.id).one_or_none()
+    elif user_id is not None:
+        db_user = session.query(models.User).filter(models.User.discord_id == user_id).one_or_none()
+    elif username is not None:
+        db_user = session.query(models.User).filter(models.User.name == user.name).one_or_none()
+
+    if not db_user:
+        db_user = models.User(discord_username=user.name, discord_id=user.id, balance=500)
+        session.add(db_user)
+        session.commit()
+
+    return db_user
 
 
-def update_active_playlist(profile: dict, value):
-    return db['profile'].find_one_and_update(filter={"_id": profile['_id']},
-                                             update={"$set": {"active_playlist": value}},
-                                             upsert=True, return_document=ReturnDocument.AFTER)
+def add_birthday(user: models.User, birthday):
+    session = database.session()
+    user.birthday = birthday
+    session.commit()
+    return user
+
+
+def update_money(user: models.User, money_update):
+    session = database.session()
+    user.balance = max(user.balance + money_update, 0)
+    session.commit()
+    return user
+
+
+def update_active_playlist(profile: models.User, value):
+    session = database.session()
+    profile.active_playlist = value
+    session.commit()
+    return profile

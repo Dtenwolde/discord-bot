@@ -1,3 +1,4 @@
+from src.database.models import models
 from src.database.repository import profile_repository
 
 
@@ -6,10 +7,10 @@ class Player:
         Stores information about a player participating in a web_server game.
     """
 
-    def __init__(self, profile: dict, socket, table):
+    def __init__(self, profile: models.User, socket, table):
         self.profile = profile
         self.socket = socket
-        self.initial_balance = profile['balance']
+        self.initial_balance = profile.balance
 
         from src.web_server.lib.poker.PokerTable import PokerTable
         self.table: PokerTable = table

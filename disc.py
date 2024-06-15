@@ -21,6 +21,7 @@ def to_thread(func: typing.Callable) -> typing.Coroutine:
         loop = asyncio.get_event_loop()
         wrapper = functools.partial(func, *args, **kwargs)
         return await loop.run_in_executor(None, wrapper)
+
     return wrapper
 
 
@@ -32,9 +33,6 @@ def main():
     bot.initialize()
     asyncio.run(bot_run())
     # bot.run(bot.token)
-
-
-
 
 
 if __name__ == "__main__":

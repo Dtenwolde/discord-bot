@@ -10,7 +10,7 @@ from discord import Message
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
 
-from src.database import mongodb as db
+from src.database import database
 
 from src.custom_emoji import CustomEmoji
 from src.database.repository import profile_repository
@@ -33,6 +33,7 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
 
 spotify_messenger = None
 
+
 async def send_music_info(channel, result):
     out = "Currently playing: %s" % result["title"]
 
@@ -54,10 +55,10 @@ class Playlist(commands.Cog):
 
         if subcommand == "add":
             # Check if there is a playlist active for this user.
-            if profile['active_playlist'] is None:
+            if profile.active_playlist is None:
                 return await context.channel.send(
                     "No playlist selected yet. Select a playlist with !playlist select <name>.")
-            playlist = music_repository.get_playlist(context.author, profile['active_playlist'])
+            playlist = music_repository.get_playlist(context.author, profile.active_playlist)
 
             # Add music from your current music list to this playlist
             split_message = context.message.content.split(" ")
@@ -73,26 +74,27 @@ class Playlist(commands.Cog):
                         numbers = [int(s_number)]
 
                     # Add all songs to this playlist
-                    collection = db['playlistSong']
+                    session = database.session()
                     for number in numbers:
                         try:
                             song = songs[int(number)]
-                            ps = PlaylistSong(playlist, song)
-                            collection.insert_one(ps.to_mongodb())
+                            ps = PlaylistSong(playlist_id=playlist.id, song_id=song.id)
+                            session.add(ps)
                             await context.channel.send(
-                                f":white_check_mark: Successfully added {song['title']} to {playlist}")
+                                f":white_check_mark: Successfully added {song.title} to {playlist}")
                         except IndexError:
                             await context.channel.send("Cannot add song number %d." % number)
+                    session.commit()
             else:
                 return await context.channel.send(
                     "Currently only adding songs which are already added in your personal playlist is supported.")
         elif subcommand == "delete":
-            if profile['active_playlist'] is None:
+            if profile.active_playlist is None:
                 return await context.channel.send(
                     "No playlist selected yet. Select a playlist with !playlist select <name>.")
 
             # Show all songs in the active playlist for this user
-            playlist = music_repository.get_playlist(context.author, profile['active_playlist'])
+            playlist = music_repository.get_playlist(context.author, profile.active_playlist)
             songs = music_repository.get_playlist_songs(playlist)
 
             # Check if the delete value is valid.
@@ -103,32 +105,34 @@ class Playlist(commands.Cog):
             title = song.title
 
             # Delete song from db
-            collection = db['playlistSong']
-            collection.find_one_and_delete({"_id": song["_id"]})
+            session = database.session()
+            session.delete(song)
+            session.commit()
+
             await context.channel.send(f":x: Deleted song {to_delete} - {title} from this playlist.")
 
         elif subcommand == "show":
-            if profile['active_playlist'] is None:
+            if profile.active_playlist is None:
                 return await context.channel.send(
                     "No playlist selected yet. Select a playlist with !playlist select <name>.")
 
             # Show all songs in the active playlist for this user
-            playlist = music_repository.get_playlist(context.author, profile['active_playlist'])
+            playlist = music_repository.get_playlist(context.author, profile.active_playlist)
             songs = music_repository.get_playlist_songs(playlist)
             if len(songs) == 0:
-                return await context.channel.send("Playlist '%s' is empty." % profile['active_playlist'])
+                return await context.channel.send("Playlist '%s' is empty." % profile.active_playlist)
 
             def formatting(i, s: dict):
-                return "%d: %s" % (i, music_repository.get_song_by_id(s["song_id"])['title'])
+                return "%d: %s" % (i, music_repository.get_song_by_id(s["song_id"]).title)
 
-            from utils import create_table
+            from src.utils import create_table
             # Try to convert page number
             page = 0
             try:
                 page = int(value)
             except ValueError:
                 pass
-            table = create_table("Playlist " + profile['active_playlist'], songs, formatting, page=page)
+            table = create_table("Playlist " + profile.active_playlist, songs, formatting, page=page)
             await context.channel.send(table)
         elif subcommand == "select":
             # Set a playlist as the active playlist for this user.
@@ -136,9 +140,9 @@ class Playlist(commands.Cog):
             if not playlist:
                 return await context.channel.send("Cannot select this playlist.")
             profile = profile_repository.update_active_playlist(profile, value)
-            await context.channel.send(f"{profile['owner']} selected playlist {profile['active_playlist']}.")
+            await context.channel.send(f"{profile.discord_username} selected playlist {profile.active_playlist}.")
         elif subcommand == "play":
-            playlist = music_repository.get_playlist(context.author, profile['active_playlist'])
+            playlist = music_repository.get_playlist(context.author, profile.active_playlist)
             if not playlist:
                 return await context.channel.send("Cannot select this playlist.")
 
@@ -148,7 +152,7 @@ class Playlist(commands.Cog):
                 await self.bot.music_player.add_queue(context.message, song.url)
 
             await context.channel.send(
-                "Added %d songs from playlist '%s' to the queue." % (len(songs), profile['active_playlist']))
+                "Added %d songs from playlist '%s' to the queue." % (len(songs), profile.active_playlist))
         else:
             await context.channel.send("Unknown subcommand '%s'." % subcommand)
 
@@ -231,7 +235,7 @@ class Playlist(commands.Cog):
         else:
             deleted_song = remove_from_owner(self.bot.music_player.currently_playing, message.author.id)
             await self.bot.music_player.skip(context)
-        await context.channel.send(f":x: Deleted {deleted_song['title']}")
+        await context.channel.send(f":x: Deleted {deleted_song.title}")
 
 
 class MusicPlayer(commands.Cog):
@@ -295,7 +299,7 @@ class MusicPlayer(commands.Cog):
 
             shuffle(songs)
             for song in songs:
-                await self.bot.music_player.add_queue(message, song['url'])
+                await self.bot.music_player.add_queue(message, song.url)
 
             await message.channel.send("Queueing " + str(len(songs)) + " songs.")
             await message.delete()
@@ -330,7 +334,7 @@ class MusicPlayer(commands.Cog):
                         await message.channel.send("Playlist id should be between %d and %d" % (0, len(songs)))
                     continue
 
-                await self.bot.music_player.add_queue(message, songs[num]['url'])
+                await self.bot.music_player.add_queue(message, songs[num].url)
 
             await message.channel.send("Added %d songs" % len([num for num in nums if len(songs) > num >= 0]))
             await message.delete()
@@ -355,8 +359,8 @@ class MusicPlayer(commands.Cog):
                 msg = "No songs found."
             else:
                 for song in songs:
-                    await self.bot.music_player.add_queue(message, song['url'])
-                msg = "Added %d songs. (First up: %s)" % (len(songs), songs[0]['title'])
+                    await self.bot.music_player.add_queue(message, song.url)
+                msg = "Added %d songs. (First up: %s)" % (len(songs), songs[0].title)
             await message.channel.send(msg)
             await message.delete()
         else:
@@ -374,6 +378,7 @@ class MusicPlayer(commands.Cog):
 
     def get_title(self, url):
         result = self.ydl.extract_info(url, download=False)
+        print(result)
         return result["title"]
 
     async def add_queue(self, message, url: str):
@@ -381,12 +386,9 @@ class MusicPlayer(commands.Cog):
 
         # Check if the song is in db, if not, add it to the db
         if song is None:
-            # collection = db['song']
-
             video_title = self.get_title(url)
-            song = Song(message.author, video_title, url)
+            song = Song(owner_id=message.author, title=video_title, url=url)
             music_repository.add_music(song)
-            # collection.insert_one(song.to_mongodb())
 
         self.queue.put((message, url))
 
@@ -394,7 +396,7 @@ class MusicPlayer(commands.Cog):
             try:
                 self.play()
                 print("Playing song.")
-            except Exception as e:  # TODO
+            except Exception as e:
                 print(e)
                 print("Error while playing song.")
 
@@ -448,7 +450,7 @@ class MusicPlayer(commands.Cog):
         Makes the bot leave its currently active voice channel.
         """
         self.clear_and_stop(context)
-        await context.voice_client.disconnect()
+        await context.voice_client.disconnect(force=True)
 
     @commands.command()
     async def shuffle(self, context: Context):
@@ -489,7 +491,7 @@ class MusicPlayer(commands.Cog):
         for i in range(page * page_size, min(size, (page + 1) * page_size)):
             _, url = self.bot.music_player.queue.queue[i]
             song = music_repository.get_song(url)
-            out += "%d: %s | %s\n" % (i, song['title'], song['owner'])
+            out += "%d: %s | %s\n" % (i, song.title, song.owner.discord_username)
         out += "```"
         await message.channel.send(out, delete_after=30)
         await context.message.delete()
@@ -557,9 +559,7 @@ class MusicPlayer(commands.Cog):
             song = music_repository.get_song(url)
 
             if song is None:
-                new_song = Song(message.author, title, url)
-                song = music_repository.add_music(new_song)  # TODO Check if working
-            music_repository.update_latest_playtime(song)
+                music_repository.add_music(Song(owner_id=message.author, title=title, url=url))
 
         audio_source = discord.FFmpegPCMAudio(source_url, **FFMPEG_OPTS)
         self.currently_playing = url

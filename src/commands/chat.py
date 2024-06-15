@@ -25,7 +25,7 @@ class Chat(commands.Cog):
             trig = arr[0].strip()
             resp = arr[1].strip()
 
-            trigger = Trigger(message, trig, resp)
+            trigger = Trigger(guild_id=message.guild.id, trigger=trig, response=resp)
             err = trigger_repository.add_trigger(trigger)
 
             if err is not None:
@@ -59,9 +59,10 @@ class Chat(commands.Cog):
         out = "```"
         out += "{0: <20}  | {1: <16}\n".format("Trigger"[:20], "Creator"[:16])
         for trigger in self.bot.triggers[message.guild]:
+
             if trigger is None:
                 continue
-            out += "{0: <20}  | {1: <16}\n".format(trigger['trigger'][:20], trigger['creator'][:16])
+            out += "{0: <20}  | {1: <16}\n".format(trigger.trigger[:20], trigger.creator.discord_username[:16])
         out += "```"
         await message.channel.send(out)
 

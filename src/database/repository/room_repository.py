@@ -1,4 +1,4 @@
-from src.database import mongodb as db
+from src.web_server.lib.hallway.storage.database import db
 
 
 def get_rooms():

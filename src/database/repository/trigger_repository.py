@@ -1,38 +1,41 @@
+from typing import Optional, List
+
 from discord import Guild
 
+from src.database import database
 from src.database.models.models import Trigger
-from src.database import mongodb as db
 
 
-def get_triggers(guild: Guild):
+def get_triggers(guild: Guild) -> List[Trigger]:
     if guild is None:
         return None
 
-    collection = db['trigger']
-    return list(collection.find({"guild_id": guild.id}))
+    session = database.session()
+    return session.query(Trigger).filter(Trigger.guild_id == guild.id).all()
 
 
-def get_trigger(guild: Guild, name: str):
-    collection = db['trigger']
-
-    return collection.find_one({"guild_id": guild.id, "trigger": name})
+def get_trigger(guild: Guild, name: str) -> Optional[Trigger]:
+    session = database.session()
+    return session.query(Trigger).filter(Trigger.guild_id == guild.id and Trigger.trigger == name).one_or_none()
 
 
 def remove_trigger(guild: Guild, name: str):
-    collection = db['trigger']
-
     trigger = get_trigger(guild, name)
-    return collection.find_one_and_delete({"_id": trigger['_id']})
+    session = database.session()
+    session.delete(trigger)
+    session.commit()
 
 
 def add_trigger(trigger: Trigger):
-    collection = db['trigger']
-
     if len(trigger.trigger) < 3 or len(trigger.trigger) > 50:
         return "Trigger length has to be 3 < n < 50"
 
-    try:
-        collection.insert_one(trigger.to_mongodb())
-    except:  # TODO error handle
-        return "This trigger already exists."
-    return None
+    session = database.session()
+    existing = session.query(Trigger).filter(
+        Trigger.guild_id == trigger.guild_id and Trigger.trigger == trigger.trigger).one_or_none()
+
+    if existing:
+        raise RuntimeError("This trigger already exists.")
+
+    session.add(trigger)
+    session.commit()

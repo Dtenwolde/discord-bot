@@ -3,7 +3,8 @@ from discord import User
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
 
-from src.database import mongodb as db
+from src.database import database
+from src.database.models import models
 from src.database.models.models import LeagueGame
 from src.database.repository import profile_repository
 
@@ -68,22 +69,22 @@ class LeagueAPI(commands.Cog):
                 if participant.get("summonerId") == summoner_id:
                     team = participant.get("teamId")
 
-            # update game in db
-            collection = db['leagueGame']
-            games = list(collection.find({"owner_id": user.id}))
-            for game in games:
-                collection.find_one_and_update({"_id": game['_id']}, {"$set": {"game_id": game_id, "team": team}})
-        # elif raw_response.status_code == 403:
-        #     raise RuntimeError("Forbidden to access RIOT API. Consider updating the API key")
-        # elif raw_response.status_code == 404:
-        #     raise RuntimeError("No game found.")
+            game.team = team
+            game.game_id = game_id
+
+            session = database.session()
+            session.commit()
+        elif raw_response.status_code == 403:
+            print("[ERROR]: Forbidden to access RIOT API. Consider updating the API key")
+        elif raw_response.status_code == 404:
+            print("[ERROR]: No game found.")
 
 
-    def process_game_result(self, user: User, game):
+    def process_game_result(self, user: User, game: LeagueGame):
         endpoint = "/lol/match/v5/matches/EUW1_%s" % game['game_id']
         raw_response = requests.get(CONTINENT_URL + API_URL + endpoint, headers=self.headers)
 
-        collection = db['leagueGame']
+        session = database.session()
 
         if raw_response.status_code == 200:
             response = raw_response.json()['info']
@@ -111,7 +112,8 @@ class LeagueAPI(commands.Cog):
                         information = "%s lost the bet on %s of %s." % (user.name, game['type'], game['amount'])
 
                     # Remove entry
-                    collection.find_one_and_update({"_id": game['_id']}, {"$set": {"payed_out": True}})
+                    game.payed_out = True
+                    session.commit()
             return information
         else:
             return None
@@ -120,11 +122,11 @@ class LeagueAPI(commands.Cog):
     async def payout_games(self):
         await self.bot.wait_until_ready()
 
-        collection = db['leagueGame']
-        games = list(collection.find({"payed_out": {"$eq": False}}))
+        session = database.session()
+        unprocessed_games = session.query(LeagueGame).filter(LeagueGame.payed_out == False).all()
 
         try:
-            for game in games:
+            for game in unprocessed_games:
                 user = self.bot.get_user(game['owner_id'])
                 if user is None:
                     print("User id %s not found." % game['owner_id'])
@@ -146,7 +148,7 @@ class LeagueAPI(commands.Cog):
         """
         Bet on the next league game you will play.
         """
-        collection = db['leagueGame']
+        session = database.session()
         profile = profile_repository.get_profile(user_id=context.author.id)
 
         if profile['league_user_id'] is None:
@@ -160,18 +162,24 @@ class LeagueAPI(commands.Cog):
             return await context.channel.send(
                 "%s is not a valid condition. Pick one from %s" % (condition, ", ".join(x[0] for x in CONDITIONS)))
 
-        existing = collection.find_one({"owner_id": context.author.id, "type": condition})
+        existing = session.query(LeagueGame).filter(LeagueGame.owner_id == context.author.id and LeagueGame.type == condition).one_or_none()
 
         if existing:
-            collection.find_one_and_update({"_id": existing["_id"]}, {"$inc": {"amount": amount}})
+            existing: LeagueGame
+            existing.amount += amount
             return await context.channel.send(
                 "You increased the bet amount to %d to get first %s the next game." % (existing['amount'], condition))
 
         # Create a game object to keep track of bets.
-        game = LeagueGame(context.author, amount, condition, context.channel.id)
+        game = LeagueGame(
+            owner_id=context.author.id,
+            amount=amount,
+            type=condition,
+            channel_id=context.channel.id)
         profile = profile_repository.update_money(profile, -amount)
 
-        collection.insert_one(game.to_mongodb())
+        session.add(game)
+        session.commit()
 
         await context.channel.send(
             f"You bet {amount} to get first {condition} the next game. Balance remaining: {profile['balance']}")
@@ -181,8 +189,8 @@ class LeagueAPI(commands.Cog):
         """
         Shows a list of your active bets and the value.
         """
-        collection = db['leagueGame']
-        bets = list(collection.find({"owner_id": context.author.id}))
+        session = database.session()
+        bets = session.query(LeagueGame).filter(LeagueGame.owner_id == context.author.id).all()
 
         out = "```\nActive bets:\n"  # TODO Create embed for this
         for bet in bets:
@@ -196,19 +204,14 @@ class LeagueAPI(commands.Cog):
         Connects your league account to the profile used by this bot.
         Only works on EUW server right now.
         """
-        collection = db['profile']
-        profile = collection.find_one({"owner_id": context.author.id})
-
-        if profile is None:  # TODO Implement error handling in case profile not found
-            return await context.channel.send("Profile not found, go complain to the moderators")
-            # profile = Profile(context.author)
-            # profile.init_balance(session, context.author)
-            # session.add(profile)
+        profile = profile_repository.get_profile(user=context.author)
 
         account_id = self.get_account_id(name)
         if account_id is None:
             return await context.channel.send("This summoner name does not seem to exist.")
 
-        collection.find_one_and_update({"_id": profile['_id']}, {"$set": {"league_user_id": account_id}})
+        session = database.session()
+        profile.league_user_id = account_id
+        session.commit()
 
         await context.channel.send("Successfully linked %s to your account." % name)

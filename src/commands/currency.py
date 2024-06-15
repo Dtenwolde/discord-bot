@@ -3,7 +3,8 @@ from discord import User, Forbidden, Message, Embed
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from src.database import mongodb as db
+from src.database import database
+from src.database.models import models
 from src.database.repository import profile_repository
 from src.custom_emoji import CustomEmoji
 
@@ -24,8 +25,8 @@ class Currency(commands.Cog):
 
     @commands.command()
     async def pay(self, context: Context, user: User, amount: float):
-        author = profile_repository.get_money(context.author)
-        user = profile_repository.get_money(user)
+        author = profile_repository.get_profile(user=context.author)
+        user = profile_repository.get_profile(user=user)
 
         if author == user:
             return await context.channel.send(f"Are you really trying to pay yourself? {CustomEmoji.dani}")
@@ -36,7 +37,7 @@ class Currency(commands.Cog):
         if amount < 0:
             return await context.channel.send(f"No stealing! {CustomEmoji.pepohmm}")
 
-        if author['balance'] < amount:
+        if author.balance < amount:
             return await context.channel.send(f"You don't have enough money. {CustomEmoji.omegalul}")
 
         # Update balance
@@ -44,25 +45,25 @@ class Currency(commands.Cog):
         author = profile_repository.update_money(author, -amount)
 
         await context.channel.send(f"Transferred money successfully."
-                                   f"\n\tNew balance for {author['owner']}: {author['balance']}"
-                                   f"\n\tNew balance for {user['owner']}: {user['balance']}")
+                                   f"\n\tNew balance for {author.discord_username}: {author.balance}"
+                                   f"\n\tNew balance for {user.discord_username}: {user.balance}")
 
     @commands.command()
     async def balance(self, context: Context, user: User = None):
         if not user:
-            profile = profile_repository.get_money(context.author)
+            profile = profile_repository.get_profile(user=context.author)
         else:
-            profile = profile_repository.get_money(user)
+            profile = profile_repository.get_profile(user=user)
 
-        await context.channel.send(f"Current balance: {format_money(profile['balance'])}")
+        await context.channel.send(f"Current balance: {format_money(profile.balance)}")
 
     @commands.command()
     async def balancetop(self, context: Context):
-        collection = db['profile']
-        profiles = list(collection.find().sort("balance", DESCENDING).limit(15))
+        session = database.session()
+        profiles = session.query(models.User).order_by(models.User.balance.desc()).limit(15)
         body = ""
         for i, profile in enumerate(profiles):
-            body += f"{i + 1}: {profile['owner']} ({format_money(profile['balance'])})\n"
+            body += f"{i + 1}: {profile.discord_username} ({format_money(profile.balance)})\n"
         embed = Embed(title="Current top", description=body, color=0xe2e01d)
 
         await context.channel.send(embed=embed)
@@ -76,7 +77,7 @@ class Currency(commands.Cog):
         message: Message = context.message
         name = message.content.split(" ", 2)[2]
 
-        profile = profile_repository.get_money(context.author)
+        profile = profile_repository.get_profile(user=context.author)
 
         if profile['balance'] < NAME_CHANGE_COST:
             return await context.channel.send("Changing someones name costs %d." % NAME_CHANGE_COST)

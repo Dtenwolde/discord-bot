@@ -1,204 +1,169 @@
 from datetime import datetime
+from sqlalchemy import String, Integer, Boolean, Column, DateTime, ForeignKey, Float
 
-from discord import Message, Member, Guild, User
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+
+from src.database import Base
 
 
-class Trigger:
-    def __init__(self, message: Message, trig, resp):
-        self.guild_id = message.guild.id
-        self.creator_id = message.author.id
-        self.creator = message.author.name
-        self.trigger = trig
-        self.response = resp
+class JSONAble():
+    def __init__(self, **kwargs):
+        for k, v in vars(kwargs):
+            setattr(self, k, v)
 
-    def to_mongodb(self):
-        return {
-            "guild_id": self.guild_id,
-            "creator_id": self.creator_id,
-            "creator": self.creator,
-            "trigger": self.trigger,
-            "response": self.response
-        }
+    def to_json(self):
+        def _is_valid(k, v):
+            allowed_types = [str, int, bool, float, datetime]
+            return (
+                    not k.startswith("_") and
+                    type(v) in allowed_types
+            )
+
+        return {k: v for k, v in self.__dict__.values() if _is_valid(k, v)}
+
+
+class User(Base, JSONAble):
+    __tablename__ = "user"
+
+    discord_id = Column(Integer, primary_key=True)
+    discord_username = Column(String)
+
+    league_user_id = Column(Integer)
+    balance = Column(Integer)
+    active_playlist = Column(Integer)
+    birthday = Column(DateTime)
+
+
+class Trigger(Base, JSONAble):
+    __tablename__ = "trigger"
+
+    id = Column(Integer, primary_key=True)
+
+    guild_id = Column(Integer)
+
+    creator_id = mapped_column(ForeignKey("user.discord_id"))
+    creator: Mapped["User"] = relationship("User")
+
+    trigger = Column(String)
+    response = Column(String)
 
     def __repr__(self):
         return "%s -> %s by %s (%s)" % (self.trigger, self.response, self.creator, self.guild_id)
 
 
-class Report:
-    def __init__(self, guild: Guild, reportee: Member, reporting: Member):
-        self.guild_id = guild.id
+class Report(Base, JSONAble):
+    __tablename__ = "report"
 
-        self.reportee = reportee.name
-        self.reportee_id = reportee.id
+    id = Column(Integer, primary_key=True)
 
-        self.reporting = reporting.name
-        self.reporting_id = reporting.id
+    guild_id = Column(Integer)
 
-        self.time = datetime.now()
+    reportee_id: Mapped[int] = mapped_column(ForeignKey("user.discord_id"))
+    reportee: Mapped["User"] = relationship(foreign_keys=[reportee_id])
 
-    def to_mongodb(self):
-        return {
-            "guild_id": self.guild_id,
-            "reportee": self.reportee,
-            "reportee_id": self.reportee_id,
-            "reporting": self.reporting,
-            "reporting_id": self.reporting_id,
-            "time": self.time
-        }
+    reporting_id = mapped_column(ForeignKey("user.discord_id"))
+    reporting: Mapped["User"] = relationship(foreign_keys=[reporting_id])
+
+    time = Column(DateTime, default=datetime.now())
 
 
-class Honor:
-    def __init__(self, guild: Guild, honoree: User, honoring: User):
-        self.guild_id = guild.id
+class Honor(Base, JSONAble):
+    __tablename__ = "honor"
 
-        self.honoree = honoree.name
-        self.honoree_id = honoree.id
+    id = Column(Integer, primary_key=True)
 
-        self.honoring = honoring.name
-        self.honoring_id = honoring.id
+    guild_id = Column(Integer)
 
-        self.time = datetime.now()
+    honoree_id = Column(ForeignKey("user.discord_id"))
+    honoree = relationship("User", foreign_keys=[honoree_id])
 
-    def to_mongodb(self):
-        return {
-            "guild_id": self.guild_id,
-            "honoree": self.honoree,
-            "honoree_id": self.honoree_id,
-            "honoring": self.honoring,
-            "honoring_id": self.honoring_id,
-            "time": self.time
-        }
+    honoring_id = Column(ForeignKey("user.discord_id"))
+    honoring = relationship("User", foreign_keys=[honoring_id])
+
+    time = Column(DateTime, default=datetime.now())
 
 
-class Song:
-    def __init__(self, owner: Member, title: str, url: str):
-        self.owner = owner.name
-        self.owner_id = owner.id
-        self.title = title
-        self.url = url
-        self.latest_playtime = datetime.now()
+class Song(Base, JSONAble):
+    __tablename__ = "song"
 
-    def to_mongodb(self):
-        return {
-            "owner": self.owner,
-            "owner_id": self.owner_id,
-            "title": self.title,
-            "url": self.url,
-            "latest_playtime": self.latest_playtime
-        }
+    id = Column(Integer, primary_key=True)
+
+    owner_id = Column(ForeignKey("user.discord_id"))
+    owner = relationship("User")
+
+    title = Column(String)
+    url = Column(String)
+    latest_playtime = Column(DateTime, default=datetime.now())
 
 
-class Playlist:
-    def __init__(self, owner: Member, title: str):
-        self.owner_id = owner.id
-        self.title = title
-        self.public = True
+class Playlist(Base, JSONAble):
+    __tablename__ = "playlist"
 
-    def to_mongodb(self):
-        return {
-            "owner_id": self.owner_id,
-            "title": self.title,
-            "public": self.public
-        }
+    id = Column(Integer, primary_key=True)
+
+    owner_id = Column(ForeignKey("user.discord_id"))
+    owner = relationship("User")
+    title = Column(String)
+    public = Column(Boolean, default=False)
 
 
-class PlaylistSong:
-    def __init__(self, playlist: dict, song: dict):
-        self.playlist_id = playlist['_id']
-        self.song_id = song['_id']
+class PlaylistSong(Base, JSONAble):
+    __tablename__ = "playlist_song"
 
-    def to_mongodb(self):
-        return {
-            "playlist_id": self.playlist_id,
-            "song_id": self.song_id
-        }
+    id = Column(Integer, primary_key=True)
 
+    playlist_id = Column(ForeignKey("playlist.id"))
+    playlist = relationship("Playlist")
 
-class Profile:
-    def __init__(self, owner: User):
-        self.discord_username = owner.name
-        self.discord_id = owner.id
-        self.league_user_id = None
-        self.balance = 0
-        self.active_playlist = None
-
-    def init_balance(self):
-        from database.repository import honor_repository
-
-        # Set initial balance to honor count
-        count = honor_repository.get_honor_count_by_id(self.discord_id)
-        self.balance = count * 100
-
-    def to_mongodb(self):
-        return {
-            "owner": self.discord_username,
-            "owner_id": self.discord_id,
-            "league_user_id": self.league_user_id,
-            "balance": self.balance,
-        }
+    song_id = Column(ForeignKey("song.id"))
+    song = relationship("Song")
 
 
-class LeagueGame:
-    def __init__(self, owner: User, amount, type, channel_id):
-        self.owner_id = owner.id
-        self.amount = amount
-        self.type = type
-        self.channel_id = channel_id
-        self.game_id = None
-        self.team = None
-        self.payed_out = False
+class LeagueGame(Base, JSONAble):
+    __tablename__ = "league_game"
 
-    def to_mongodb(self):
-        return {
-            "owner_id": self.owner_id,
-            "amount": self.amount,
-            "type": self.type,
-            "channel_id": self.channel_id,
-            "game_id": self.game_id,
-            "team": self.team,
-            "payed_out": self.payed_out
-        }
+    id = Column(Integer, primary_key=True)
+
+    owner_id = Column(ForeignKey("user.discord_id"))
+    owner = relationship("User")
+
+    amount = Column(Integer)
+    type = Column(String)
+    channel_id = Column(Integer)
+    game_id = Column(Integer, default=None)
+    team = Column(String, default=None)
+    payed_out = Column(Boolean, default=False)
 
 
-class EsportGame:
-    def __init__(self, owner: User, match_id, amount, team, odd, channel_id):
-        self.owner_id = owner.id
-        self.game_id = match_id
-        self.amount = amount
-        self.team = team
-        self.odd = odd
-        self.channel_id = channel_id
+class EsportsGame(Base, JSONAble):
+    __tablename__ = "esports_game"
+    id = Column(Integer, primary_key=True)
 
-    def to_mongodb(self):
-        return {
-            "owner_id": self.owner_id,
-            "game_id": self.game_id,
-            "amount": self.amount,
-            "team": self.team,
-            "odd": self.odd,
-            "channel_id": self.channel_id,
-        }
+    owner_id = Column(ForeignKey("user.discord_id"))
+    owner = relationship("User")
+
+    game_id = Column(Integer, default=None)
+
+    amount = Column(Integer)
+    odd = Column(Float)
+    team = Column(String, default=None)
+    channel_id = Column(Integer)
+
+    processed = Column(Boolean, default=False)
+    result = Column(String, default=None)
 
 
-class RoomModel:
-    """
-    Stores information about a room in which poker games are being played
-    """
+class GameRoom(Base, JSONAble):
+    __tablename__ = "game_room"
 
-    def __init__(self, name: str, profile: dict, room_type: str, created, message_id):
-        self.name = name
-        self.author_id = profile['owner_id']
-        self.author = profile['owner']
-        self.type = room_type
-        self.created = created
-        self.message_id = message_id
+    id = Column(Integer, primary_key=True)
 
-    def to_mongodb(self):
-        return {
-            "name": self.name,
-            "author_id": self.author_id,
-            "author": self.author,
-            "type": self.type,
-            "created": self.created,
-            "message_id": self.message_id
-        }
+    name = Column(String)
+
+    author_id = Column(ForeignKey("user.discord_id"))
+    author = relationship("User")
+
+    type = Column(String)
+    created_datetime = Column(DateTime, default=datetime.now())
+
+    message_id = Column(Integer)
